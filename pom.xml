@@ -1103,9 +1103,6 @@
                             <excludes>
                                 <exclude>**/**IT.java</exclude>
                             </excludes>
-                            <excludedGroups>
-                                com.hazelcast.test.annotation.NightlyTest
-                            </excludedGroups>
                         </configuration>
                     </plugin>
 
@@ -1124,9 +1121,6 @@
                                 -Dlog4j.skipJansi=true
                                 ${extraVmArgs}
                             </argLine>
-                            <excludedGroups>
-                                com.hazelcast.test.annotation.NightlyTest
-                            </excludedGroups>
                             <useManifestOnlyJar>false</useManifestOnlyJar>
                             <useSystemClassLoader>true</useSystemClassLoader>
                         </configuration>
