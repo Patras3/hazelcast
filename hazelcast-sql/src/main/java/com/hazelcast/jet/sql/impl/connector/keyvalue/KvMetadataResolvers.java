@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package com.hazelcast.jet.sql.impl.connector.keyvalue;
 
 import com.hazelcast.internal.serialization.InternalSerializationService;
 import com.hazelcast.jet.sql.impl.connector.SqlConnector;
-import com.hazelcast.jet.sql.impl.schema.RelationsStorage;
+import com.hazelcast.jet.sql.impl.schema.AbstractRelationsStorage;
 import com.hazelcast.jet.sql.impl.schema.TypeUtils.FieldEnricher;
+import com.hazelcast.jet.sql.impl.CalciteSqlOptimizer;
 import com.hazelcast.spi.impl.NodeEngine;
 import com.hazelcast.sql.impl.QueryException;
-import com.hazelcast.sql.impl.SqlServiceImpl;
 import com.hazelcast.sql.impl.schema.MappingField;
 
 import javax.annotation.Nullable;
@@ -90,7 +90,7 @@ public class KvMetadataResolvers {
     ) {
         final InternalSerializationService serializationService = (InternalSerializationService) nodeEngine
                 .getSerializationService();
-        final RelationsStorage relationsStorage = ((SqlServiceImpl) nodeEngine.getSqlService()).getOptimizer()
+        final AbstractRelationsStorage relationsStorage = ((CalciteSqlOptimizer) nodeEngine.getSqlService().getOptimizer())
                 .relationsStorage();
         // normalize and validate the names and external names
         for (MappingField field : userFields) {
@@ -135,7 +135,7 @@ public class KvMetadataResolvers {
             List<MappingField> userFields,
             Map<String, String> options,
             InternalSerializationService serializationService,
-            RelationsStorage relationsStorage
+            AbstractRelationsStorage relationsStorage
     ) {
         String format = getFormat(options, isKey);
         if (format != null && NESTED_FIELDS_SUPPORTED_FORMATS.contains(format)) {

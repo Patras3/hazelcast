@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.hazelcast.internal.metrics.Probe;
 import com.hazelcast.internal.partition.impl.InternalPartitionServiceImpl;
 import com.hazelcast.internal.partition.impl.PartitionServiceState;
 import com.hazelcast.internal.serialization.Data;
+import com.hazelcast.internal.util.ExceptionUtil;
 import com.hazelcast.internal.util.counters.Counter;
 import com.hazelcast.internal.util.counters.MwCounter;
 import com.hazelcast.internal.util.executor.ManagedExecutorService;
@@ -59,8 +60,6 @@ import com.hazelcast.jet.impl.operation.GetJobIdsOperation.GetJobIdsResult;
 import com.hazelcast.jet.impl.operation.NotifyMemberShutdownOperation;
 import com.hazelcast.jet.impl.pipeline.PipelineImpl;
 import com.hazelcast.jet.impl.pipeline.PipelineImpl.Context;
-import com.hazelcast.jet.impl.util.ExceptionUtil;
-import com.hazelcast.jet.impl.util.LoggingUtil;
 import com.hazelcast.jet.impl.util.Util;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.ringbuffer.OverflowPolicy;
@@ -88,7 +87,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Spliterators;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -103,7 +101,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static com.hazelcast.cluster.ClusterState.IN_TRANSITION;
 import static com.hazelcast.cluster.ClusterState.PASSIVE;
@@ -123,8 +120,6 @@ import static com.hazelcast.jet.impl.JobClassLoaderService.JobPhase.COORDINATOR;
 import static com.hazelcast.jet.impl.TerminationMode.CANCEL_FORCEFUL;
 import static com.hazelcast.jet.impl.execution.init.CustomClassLoadedObject.deserializeWithCustomClassLoader;
 import static com.hazelcast.jet.impl.operation.GetJobIdsOperation.ALL_JOBS;
-import static com.hazelcast.jet.impl.util.LoggingUtil.logFine;
-import static com.hazelcast.jet.impl.util.LoggingUtil.logFinest;
 import static com.hazelcast.spi.properties.ClusterProperty.JOB_SCAN_PERIOD;
 import static java.util.Collections.emptyList;
 import static java.util.Comparator.comparing;
@@ -259,8 +254,8 @@ public class JobCoordinationService implements DynamicMetricsProvider {
                 Object jobDefinition = deserializeJobDefinition(jobId, jobConfig, serializedJobDefinition);
                 DAG dag;
                 Data serializedDag;
-                if (jobDefinition instanceof PipelineImpl) {
-                    dag = ((PipelineImpl) jobDefinition).toDag(pipelineToDagContext);
+                if (jobDefinition instanceof PipelineImpl pipelineImpl) {
+                    dag = pipelineImpl.toDag(pipelineToDagContext);
                     serializedDag = nodeEngine().getSerializationService().toData(dag);
                 } else {
                     dag = (DAG) jobDefinition;
@@ -331,8 +326,8 @@ public class JobCoordinationService implements DynamicMetricsProvider {
         }
 
         DAG dag;
-        if (deserializedJobDefinition instanceof DAG) {
-            dag = (DAG) deserializedJobDefinition;
+        if (deserializedJobDefinition instanceof DAG dagInstance) {
+            dag = dagInstance;
         } else {
             dag = ((PipelineImpl) deserializedJobDefinition).toDag(pipelineToDagContext);
         }
@@ -389,7 +384,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
     }
 
     private static Set<String> ownedObservables(DAG dag) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(dag.iterator(), 0), false)
+        return dag.vertices().stream()
                 .map(vertex -> vertex.getMetaSupplier().getTags().get(ObservableImpl.OWNED_OBSERVABLE))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -458,7 +453,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
                             if (t instanceof CancellationException || t instanceof JetException) {
                                 throw sneakyThrow(t);
                             }
-                            throw new JetException(ExceptionUtil.stackTraceToString(t));
+                            throw new JetException(ExceptionUtil.toString(t));
                         }),
                 JobResult::asCompletableFuture,
                 jobRecord -> {
@@ -909,11 +904,11 @@ public class JobCoordinationService implements DynamicMetricsProvider {
             return oldFuture;
         }
         if (removedMembers.containsKey(uuid)) {
-            logFine(logger, "NotifyMemberShutdownOperation received for a member that was already " +
+            logger.fine("NotifyMemberShutdownOperation received for a member that was already " +
                     "removed from the cluster: %s", uuid);
             return completedFuture(null);
         }
-        logFine(logger, "Added a shutting-down member: %s", uuid);
+        logger.fine("Added a shutting-down member: %s", uuid);
         CompletableFuture[] futures = masterContexts.values().stream()
                 .map(mc -> mc.jobContext().onParticipantGracefulShutdown(uuid))
                 .toArray(CompletableFuture[]::new);
@@ -942,6 +937,10 @@ public class JobCoordinationService implements DynamicMetricsProvider {
         this.jobInvocationObservers.add(observer);
     }
 
+    public void unregisterInvocationObserver(JobInvocationObserver observer) {
+        this.jobInvocationObservers.remove(observer);
+    }
+
     JetServiceBackend getJetServiceBackend() {
         return jetServiceBackend;
     }
@@ -958,7 +957,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
         }
         // if there are any members in a shutdown process, don't start jobs
         if (!membersShuttingDown.isEmpty()) {
-            LoggingUtil.logFine(logger, "Not starting jobs because members are shutting down: %s",
+            logger.fine("Not starting jobs because members are shutting down: %s",
                     membersShuttingDown.keySet());
             return false;
         }
@@ -983,7 +982,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
         }
         if (nodeEngine.getNode().isClusterStateManagementAutomatic()
                 && !nodeEngine.getNode().isManagedClusterStable()) {
-            LoggingUtil.logFine(logger, "Not starting jobs because cluster is running in managed context "
+            logger.fine("Not starting jobs because cluster is running in managed context "
                             + "and is not yet stable. Current cluster topology intent: %s, "
                             + "expected cluster size: %d, current: %d.",
                     nodeEngine.getNode().getClusterTopologyIntent(),
@@ -1082,6 +1081,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
 
     void onMemberAdded(MemberImpl addedMember) {
         // the member can re-join with the same UUID in certain scenarios
+        membersShuttingDown.remove(addedMember.getUuid());
         removedMembers.remove(addedMember.getUuid());
         if (addedMember.isLiteMember()) {
             return;
@@ -1093,7 +1093,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
 
     void onMemberRemoved(UUID uuid) {
         if (membersShuttingDown.remove(uuid) != null) {
-            logFine(logger, "Removed a shutting-down member: %s, now shuttingDownMembers=%s",
+            logger.fine("Removed a shutting-down member: %s, now shuttingDownMembers=%s",
                     uuid, membersShuttingDown.keySet());
         } else {
             removedMembers.put(uuid, System.nanoTime());
@@ -1317,7 +1317,7 @@ public class JobCoordinationService implements DynamicMetricsProvider {
         }
 
         if (jobExecutionRecord.isSuspended()) {
-            logFinest(logger, "MasterContext for suspended %s is created", masterContext.jobIdString());
+            logger.finest("MasterContext for suspended %s is created", masterContext.jobIdString());
         } else {
             logger.info("Starting job " + idToString(jobId) + ": " + reason);
             masterContext.jobContext().tryStartJob();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,7 +241,7 @@ public interface RecordStore<R extends Record> {
      * <tt>null</tt> if there was no mapping for <tt>key</tt>.
      * @see com.hazelcast.map.impl.operation.PutFromLoadAllOperation
      */
-    Object putFromLoad(Data key, Object value, long expirationTime, Address callerAddress);
+    Object putFromLoad(Data key, Object value, long expirationTime, Address callerAddress, long now);
 
     /**
      * Puts key-value pair to map which is the result of a load from map store operation on backup.
@@ -266,7 +266,7 @@ public interface RecordStore<R extends Record> {
      * <tt>null</tt> if there was no mapping for <tt>key</tt>.
      * @see com.hazelcast.map.impl.operation.PutFromLoadAllBackupOperation
      */
-    Object putFromLoadBackup(Data key, Object value, long expirationTime);
+    Object putFromLoadBackup(Data key, Object value, long expirationTime, long now);
 
     /**
      * Merges the given {@link MapMergeTypes} via the given {@link SplitBrainMergePolicy}.
@@ -277,8 +277,8 @@ public interface RecordStore<R extends Record> {
      * @return the {@link MapMergeResponse} indicating the result of the merge
      */
     MapMergeResponse merge(MapMergeTypes<Object, Object> mergingEntry,
-                                SplitBrainMergePolicy<Object, MapMergeTypes<Object, Object>, Object> mergePolicy,
-                                CallerProvenance provenance);
+                           SplitBrainMergePolicy<Object, MapMergeTypes<Object, Object>, Object> mergePolicy,
+                           CallerProvenance provenance);
 
     R getRecord(Data key);
 
@@ -311,7 +311,7 @@ public interface RecordStore<R extends Record> {
      * does not intercept.
      *
      * @param dataKey key to remove
-     * @param backup {@code true} if a backup partition, otherwise {@code false}.
+     * @param backup  {@code true} if a backup partition, otherwise {@code false}.
      */
     void removeReplicatedRecord(Data dataKey, boolean backup);
 
@@ -468,7 +468,7 @@ public interface RecordStore<R extends Record> {
     /**
      * Returns live record or null if record is already expired. Does not load missing keys from a map store.
      *
-     * @param key      key to be accessed
+     * @param key    key to be accessed
      * @param backup true if partition is a backup-partition otherwise set false
      * @return live record or null
      * @see #get
@@ -506,7 +506,7 @@ public interface RecordStore<R extends Record> {
 
     R createRecord(Data key, Object value, long now);
 
-    R loadRecordOrNull(Data key, boolean backup, Address callerAddress);
+    R loadRecordOrNull(Data key, boolean backup, Address callerAddress, long now);
 
     /**
      * This can be used to release unused resources.
@@ -636,7 +636,7 @@ public interface RecordStore<R extends Record> {
      * <p>
      * Clears data in this record store.
      *
-     * @param backup  {@code true} if a backup partition, otherwise {@code false}.
+     * @param backup {@code true} if a backup partition, otherwise {@code false}.
      * @return number of cleared entries.
      */
     int clear(boolean backup);
@@ -646,7 +646,7 @@ public interface RecordStore<R extends Record> {
      * <p>
      * Used in replication operations.
      *
-     * @see #putReplicatedRecord
+     * @see #putOrUpdateReplicatedRecord
      */
     void reset();
 
@@ -684,6 +684,6 @@ public interface RecordStore<R extends Record> {
     boolean isTieredStorageEnabled();
 
     default void disposeOnSplitBrainHeal() {
-        // no-op
+        getMapContainer().onDestroy();
     }
 }

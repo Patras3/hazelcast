@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,10 @@ import static com.hazelcast.internal.serialization.SerializableByConvention.Reas
  * @see ClassDefinitionBuilder#ClassDefinitionBuilder(PortableId) new ClassDefinitionBuilder(PortableId)
  *
  * @since 5.4
+ * @deprecated Portable Serialization has been deprecated. We recommend you use Compact Serialization as Portable Serialization
+ * will be removed as of version 7.0.
  */
+@Deprecated(since = "5.4", forRemoval = true)
 @SerializableByConvention(PUBLIC_API)
 public class PortableId implements DataSerializable {
     private int factoryId;

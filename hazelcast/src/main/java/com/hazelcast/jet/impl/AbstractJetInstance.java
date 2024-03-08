@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.hazelcast.jet.impl.JobRepository.exportedSnapshotMapName;
-import static com.hazelcast.jet.impl.util.LoggingUtil.logFine;
 import static com.hazelcast.jet.impl.util.Util.distinctBy;
 import static com.hazelcast.security.permission.ActionConstants.ACTION_ADD_RESOURCES;
 import static com.hazelcast.security.permission.ActionConstants.ACTION_SUBMIT;
@@ -154,8 +153,8 @@ public abstract class AbstractJetInstance<M> implements JetInstance {
         if (isLightJob) {
             validateConfigForLightJobs(config);
         }
-        if (jobDefinition instanceof PipelineImpl) {
-            config = config.attachAll(((PipelineImpl) jobDefinition).attachedFiles());
+        if (jobDefinition instanceof PipelineImpl pipelineImpl) {
+            config = config.attachAll(pipelineImpl.attachedFiles());
         }
         if (!config.getResourceConfigs().isEmpty()) {
             uploadResources(jobId, config);
@@ -191,7 +190,7 @@ public abstract class AbstractJetInstance<M> implements JetInstance {
                 try {
                     return newJobInt(newJobId(), jobDefinition, config, subject, false);
                 } catch (JobAlreadyExistsException e) {
-                    logFine(getLogger(), "Could not submit job with duplicate name: %s, ignoring", config.getName());
+                    getLogger().fine("Could not submit job with duplicate name: %s, ignoring", config.getName());
                 }
             }
         }

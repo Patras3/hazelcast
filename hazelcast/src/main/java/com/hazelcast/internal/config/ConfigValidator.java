@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,8 @@ public final class ConfigValidator {
         checkTSEnabledOnEnterpriseJar(mapConfig.getTieredStoreConfig());
 
         if (getBuildInfo().isEnterprise()) {
-            checkMapNativeConfig(mapConfig, config.getNativeMemoryConfig());
             checkTieredStoreMapConfig(config, mapConfig);
+            checkMapNativeConfig(mapConfig, config.getNativeMemoryConfig());
         }
 
         checkMapEvictionConfig(mapConfig.getEvictionConfig());
@@ -150,6 +150,10 @@ public final class ConfigValidator {
         }
 
         String mapName = mapConfig.getName();
+        if (!config.getNativeMemoryConfig().isEnabled()) {
+            throw new InvalidConfigurationException(String.format("Map '%s' is configured for tiered "
+                    + "storage, but native memory is not enabled.", mapName));
+        }
         DiskTierConfig diskTierConfig = mapConfig.getTieredStoreConfig().getDiskTierConfig();
         if (!diskTierConfig.isEnabled()) {
             throw new InvalidConfigurationException(String.format("Map '%s' is configured for tiered "

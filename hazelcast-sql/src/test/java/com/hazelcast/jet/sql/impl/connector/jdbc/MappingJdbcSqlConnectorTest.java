@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.hazelcast.jet.sql.impl.connector.jdbc;
 
-import com.google.common.collect.ImmutableList;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DataConnectionConfig;
 import com.hazelcast.core.HazelcastInstance;
@@ -27,6 +26,7 @@ import com.hazelcast.sql.SqlResult;
 import com.hazelcast.sql.SqlRow;
 import com.hazelcast.sql.SqlRowMetadata;
 import com.hazelcast.test.jdbc.H2DatabaseProvider;
+import com.hazelcast.test.jdbc.JdbcObjectProvider;
 import com.hazelcast.test.jdbc.MySQLDatabaseProvider;
 import com.hazelcast.test.jdbc.PostgresDatabaseProvider;
 import org.junit.Before;
@@ -84,8 +84,9 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
 
     @Test
     public void createMappingWithExternalSchemaAndTableName() throws Exception {
+        assumeThat(recordProvider).isInstanceOf(JdbcObjectProvider.class);
         String schemaName = "schema1";
-        executeJdbc(databaseProvider.createSchemaQuery(schemaName));
+        executeJdbc(((JdbcObjectProvider) recordProvider).createSchemaQuery(schemaName));
         createTableNoQuote(quote(schemaName, tableName));
 
         String mappingName = "mapping_" + randomName();
@@ -104,7 +105,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
                 "DATA CONNECTION \"testDatabaseRef\"" + LE +
                 "OBJECT TYPE \"Table\"";
         assertRowsAnyOrder("SELECT GET_DDL('relation', '" + mappingName + "')",
-                ImmutableList.of(new Row(expectedMappingQuery)));
+                List.of(new Row(expectedMappingQuery)));
     }
 
     @Test
@@ -340,7 +341,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
 
         // then
         List<Row> showDataConnections = allRows("SHOW DATA CONNECTIONS ", sqlService);
-        Row expectedConnection = new Row(TEST_DATABASE_REF, "jdbc", jsonArray("Table"));
+        Row expectedConnection = new Row(TEST_DATABASE_REF, "Jdbc", jsonArray("Table"));
         assertThat(showDataConnections).contains(expectedConnection);
 
         // Ensure that engine is not broken after Data Connection removal with some unrelated query.
@@ -376,7 +377,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
                         "public",
                         mappingName,
                         '"' + mappingName + '"',
-                        "kafka",
+                        "Kafka",
                         "{}")));
 
         // cleanup
@@ -486,7 +487,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
         );
     }
 
-    // Postgres + MySQL : Test that table in another DB exists
+    // Postgres + MySQL : Check if table that exists in another database is not accessible
     @Test
     public void createMappingFails_tableExistInAnotherDatabase_externalNameOnlyTableName() throws SQLException {
         assumeThat(databaseProvider)
@@ -500,12 +501,12 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
         // Create table on first DB
         createTable(tableName);
 
+        // Create a new DB
         String newDBName = "db1";
         executeJdbc("CREATE DATABASE " + newDBName);
 
-        // Add a new DB
-        String newDbUrl = dbConnectionUrl.replace("com.hazelcast.jet.sql.impl.connector.jdbc.JdbcSqlTestSupport",
-                newDBName);
+        // Create new data connection
+        String newDbUrl = urlForDatabaseName(newDBName);
 
         Properties properties = new Properties();
         properties.setProperty("jdbcUrl", newDbUrl);
@@ -518,7 +519,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
                         .setProperties(properties)
         );
 
-        // Create mapping to new DB. Table does not exist on new DB, and we should get an exception
+        // Create mapping to new DB using new data connection. Table does not exist on new DB, and we should get an exception
         assertThatThrownBy(() -> execute(
                 "CREATE MAPPING " + tableName + " EXTERNAL NAME " + tableName + " ("
                         + " id INT, "
@@ -531,7 +532,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
                 .hasMessageContaining("Could not execute readDbFields for table");
     }
 
-    // Postgres : Test that table in another DB and explicit schema name exists
+    // Postgres : Check if table that exists in another database is not accessible
     @Test
     public void createMappingFails_tableExistInAnotherDatabase_externalNameFullName() throws SQLException {
         assumeThat(databaseProvider)
@@ -544,12 +545,12 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
         // Create table on first DB
         createTable(tableName);
 
+        // Create a new DB
         String newDBName = "db2";
         executeJdbc("CREATE DATABASE " + newDBName);
 
-        // Add a new DB
-        String newDbUrl = dbConnectionUrl.replace("com.hazelcast.jet.sql.impl.connector.jdbc.JdbcSqlTestSupport",
-                newDBName);
+        // Create new data connection
+        String newDbUrl = urlForDatabaseName(newDBName);
 
         Properties properties = new Properties();
         properties.setProperty("jdbcUrl", newDbUrl);
@@ -562,7 +563,7 @@ public class MappingJdbcSqlConnectorTest extends JdbcSqlTestSupport {
                         .setProperties(properties)
         );
 
-        // Create mapping to new DB. Table does not exist on new DB, and we should get an exception
+        // Create mapping to new DB using new data connection. Table does not exist on new DB, and we should get an exception
         assertThatThrownBy(() -> execute(
                 "CREATE MAPPING " + tableName + " EXTERNAL NAME " + newDBName + ".public." + tableName + " ("
                         + " id INT, "

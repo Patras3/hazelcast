@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,4 +204,15 @@ public interface ClusterService extends CoreService, Cluster {
      * @return the member list join version of the local member instance
      */
     int getMemberListJoinVersion();
+
+
+    /**
+     * Returns whether member with given identity (either {@code UUID} or {@code Address}
+     * depending on Persistence is enabled or not) is a known missing member or not.
+     *
+     * @param address Address of the missing member
+     * @param uuid    Uuid of the missing member
+     * @return true if it's a known missing member, false otherwise
+     */
+    boolean isMissingMember(Address address, UUID uuid);
 }

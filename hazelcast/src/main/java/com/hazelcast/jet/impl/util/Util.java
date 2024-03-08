@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.hazelcast.instance.impl.HazelcastInstanceImpl;
 import com.hazelcast.instance.impl.HazelcastInstanceProxy;
 import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.internal.cluster.impl.MembersView;
+import com.hazelcast.internal.nio.Bits;
 import com.hazelcast.internal.serialization.InternalSerializationService;
+import com.hazelcast.internal.serialization.impl.HeapData;
 import com.hazelcast.jet.JetException;
 import com.hazelcast.jet.JetService;
 import com.hazelcast.jet.config.EdgeConfig;
@@ -434,8 +436,7 @@ public final class Util {
         if (!logger.isInfoEnabled()) {
             return;
         }
-        if (item instanceof JetEvent) {
-            JetEvent event = (JetEvent) item;
+        if (item instanceof JetEvent event) {
             logger.info(
                     format("Event dropped, late by %d ms. currentWatermark=%s, eventTime=%s, event=%s",
                             currentWm - event.timestamp(), toLocalTime(currentWm), toLocalTime(event.timestamp()),
@@ -630,6 +631,23 @@ public final class Util {
     }
 
     /**
+     * Posix file permissions are not supported on all systems, so this utility method first performs
+     * a support check to see if the attribute is supported, and then applies it if it is. If posix
+     * file permissions are not supported at this {@link Path} then the file is not changed.
+     *
+     * @param path         the {@link Path} to apply the {@code Posix} permissions to
+     * @param permissions  the {@code Posix} permission set to apply
+     * @throws IOException as per {@link Files#setPosixFilePermissions(Path, Set)}
+     */
+    public static void setPosixFilePermissions(@Nonnull Path path, @Nonnull Set<PosixFilePermission> permissions)
+            throws IOException {
+        Set<String> supportedAttr = path.getFileSystem().supportedFileAttributeViews();
+        if (supportedAttr.contains("posix")) {
+            Files.setPosixFilePermissions(path, permissions);
+        }
+    }
+
+    /**
      * Edits the permissions on the file denoted by {@code path} by calling
      * {@code editFn} with the set of that file's current permissions. {@code
      * editFn} should modify that set to the desired permission set, and this
@@ -751,14 +769,14 @@ public final class Util {
     }
 
     public static InternalSerializationService getSerializationService(HazelcastInstance instance) {
-        if (instance instanceof HazelcastInstanceImpl) {
-            return ((HazelcastInstanceImpl) instance).getSerializationService();
-        } else if (instance instanceof HazelcastInstanceProxy) {
-            return ((HazelcastInstanceProxy) instance).getSerializationService();
-        } else if (instance instanceof HazelcastClientInstanceImpl) {
-            return ((HazelcastClientInstanceImpl) instance).getSerializationService();
-        } else if (instance instanceof HazelcastClientProxy) {
-            return ((HazelcastClientProxy) instance).getSerializationService();
+        if (instance instanceof HazelcastInstanceImpl hazelcastInstanceImpl) {
+            return hazelcastInstanceImpl.getSerializationService();
+        } else if (instance instanceof HazelcastInstanceProxy hazelcastInstanceProxy) {
+            return hazelcastInstanceProxy.getSerializationService();
+        } else if (instance instanceof HazelcastClientInstanceImpl hazelcastClientInstanceImpl) {
+            return hazelcastClientInstanceImpl.getSerializationService();
+        } else if (instance instanceof HazelcastClientProxy hazelcastClientProxy) {
+            return hazelcastClientProxy.getSerializationService();
         } else {
             throw new IllegalArgumentException("Could not access serialization service." +
                     " Unsupported HazelcastInstance type:" + instance);
@@ -770,10 +788,10 @@ public final class Util {
     }
 
     public static HazelcastInstanceImpl getHazelcastInstanceImpl(HazelcastInstance instance) {
-        if (instance instanceof HazelcastInstanceImpl) {
-            return ((HazelcastInstanceImpl) instance);
-        } else if (instance instanceof HazelcastInstanceProxy) {
-            return ((HazelcastInstanceProxy) instance).getOriginal();
+        if (instance instanceof HazelcastInstanceImpl hazelcastInstanceImpl) {
+            return hazelcastInstanceImpl;
+        } else if (instance instanceof HazelcastInstanceProxy hazelcastInstanceProxy) {
+            return hazelcastInstanceProxy.getOriginal();
         } else {
             throw new IllegalArgumentException("This method can be called only with member" +
                     " instances such as HazelcastInstanceImpl and HazelcastInstanceProxy, but not " + instance.getClass());
@@ -814,11 +832,35 @@ public final class Util {
         return nodeEngine.getConfig().getJetConfig().isEnabled();
     }
 
+    /**
+     * Creates heap data payload with deterministic hash which always selects
+     * the same partition if `hash` is smaller than the number of partitions.
+     *
+     * @implNote This method relies on cached hash stored in {@link HeapData} header.
+     * The actual data is 0 length.
+     *
+     * @param hash desired hash
+     * @return heap data payload
+     */
+    public static byte[] heapDataWithHash(int hash) {
+        var data = new byte[HeapData.HEAP_DATA_OVERHEAD];
+        Bits.writeIntB(data, 0, hash);
+        return data;
+    }
+
     public static class Identity<T> implements IdentifiedDataSerializable, FunctionEx<T, T> {
+
         public static final Identity INSTANCE = new Identity<>();
 
+        private static final long serialVersionUID = 1L;
+
         @Override
-        public T applyEx(T t) throws Exception {
+        public T apply(T t) {
+            return t;
+        }
+
+        @Override
+        public T applyEx(T t) {
             return t;
         }
 

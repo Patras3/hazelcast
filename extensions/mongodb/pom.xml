@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2023 Hazelcast Inc.
+  ~ Copyright 2024 Hazelcast Inc.
   ~
   ~ Licensed under the Hazelcast Community License (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
     <parent>
         <groupId>com.hazelcast.jet</groupId>
         <artifactId>hazelcast-jet-extensions</artifactId>
-        <version>5.4.0-SNAPSHOT</version>
+        <version>5.5.0-SNAPSHOT</version>
     </parent>
 
     <build>
@@ -180,21 +180,30 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mongodb</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>toxiproxy</artifactId>
-            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

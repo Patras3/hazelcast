@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,8 +107,18 @@ public abstract class AbstractHazelcastConnectorSupplier implements ProcessorSup
 
     protected abstract Processor createProcessor(HazelcastInstance instance, SerializationService serializationService);
 
+    /**
+     * Return if ProcessorSupplier is for local cluster or not
+     */
     boolean isLocal() {
         return (clientXml == null) && (dataConnectionName == null);
+    }
+
+    /**
+     * Return if ProcessorSupplier is for remote cluster or not
+     */
+    boolean isRemote() {
+        return !isLocal();
     }
 
     @Override

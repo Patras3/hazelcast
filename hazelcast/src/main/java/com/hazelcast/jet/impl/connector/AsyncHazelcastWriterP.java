@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,8 +152,8 @@ public abstract class AsyncHazelcastWriterP implements Processor {
 
     private void checkError() {
         Throwable t = firstError.get();
-        if (t instanceof HazelcastInstanceNotActiveException) {
-            throw handleInstanceNotActive((HazelcastInstanceNotActiveException) t, isLocal());
+        if (t instanceof HazelcastInstanceNotActiveException hazelcastInstanceNotActiveException) {
+            throw handleInstanceNotActive(hazelcastInstanceNotActiveException, isLocal());
         } else if (t != null) {
             throw sneakyThrow(t);
         }

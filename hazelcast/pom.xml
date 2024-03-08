@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+  ~ Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
     <parent>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-root</artifactId>
-        <version>5.4.0-SNAPSHOT</version>
+        <version>5.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -40,7 +40,7 @@
         <pax.exam.version>2.6.0</pax.exam.version>
         <pax.runner.version>1.8.6</pax.runner.version>
         <javax.inject.version>1</javax.inject.version>
-        <wiremock.version>3.3.1</wiremock.version>
+        <wiremock.version>3.4.2</wiremock.version>
     </properties>
 
     <build>
@@ -103,13 +103,90 @@
                 </executions>
             </plugin>
 
+            <!-- This need to be declared *before* `maven-jar-plugin` to avoid shading issues -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven.assembly.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>usercodedeployment-child-parent</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/ChildParent</outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/test/assembly/usercodedeployment-child-parent.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-entry-processor-with-anonymous-and-inner</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/EntryProcessorWithAnonymousAndInner</outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/test/assembly/usercodedeployment-entry-processor-with-anonymous-and-inner.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-incrementing-entry-processor</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/IncrementingEntryProcessor</outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/test/assembly/usercodedeployment-incrementing-entry-processor.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-incrementing-entry-processor-conflicting</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/IncrementingEntryProcessorConflicting</outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/test/assembly/usercodedeployment-incrementing-entry-processor-conflicting.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-shaded-classes</id>
+                        <phase>process-test-classes</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <attach>false</attach>
+                            <outputDirectory>${project.build.directory}/ShadedClasses</outputDirectory>
+                            <descriptors>
+                                <descriptor>${project.basedir}/src/test/assembly/usercodedeployment-shaded-classes.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <index>true</index>
-                        <compress>true</compress>
                         <manifest>
                             <mainClass>${hazelcast.serverMainClass}</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -457,6 +534,73 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>usercodedeployment-sample</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/sample</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/sample</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-child-parent</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/ChildParent</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/ChildParent</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-entry-processor-with-anonymous-and-inner</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/EntryProcessorWithAnonymousAndInner</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/EntryProcessorWithAnonymousAndInner</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-incrementing-entry-processor</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/IncrementingEntryProcessor</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/IncrementingEntryProcessor</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-incrementing-entry-processor-conflicting</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/IncrementingEntryProcessorConflicting</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/IncrementingEntryProcessorConflicting</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>usercodedeployment-shaded-classes</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>${project.basedir}/src/test/class/ShadedClasses</compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/ShadedClasses</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -465,7 +609,7 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast-tpc-engine</artifactId>
-            <version>5.4.0-SNAPSHOT</version>
+            <version>5.5.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -508,7 +652,7 @@
         <dependency>
             <groupId>com.github.erosb</groupId>
             <artifactId>everit-json-schema</artifactId>
-            <version>1.14.3</version>
+            <version>1.14.4</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.re2j</groupId>
@@ -727,7 +871,6 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>rabbitmq</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -739,7 +882,7 @@
         <dependency>
             <groupId>com.rabbitmq.jms</groupId>
             <artifactId>rabbitmq-jms</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -753,25 +896,21 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mssqlserver</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mariadb</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -792,7 +931,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>oracle-xe</artifactId>
-            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>oracle-free</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -827,6 +970,12 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>${hikari.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -844,8 +993,19 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-resolver-provider</artifactId>
-            <version>3.9.5</version>
+            <version>3.9.6</version>
             <scope>test</scope>
         </dependency>
-	</dependencies>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>

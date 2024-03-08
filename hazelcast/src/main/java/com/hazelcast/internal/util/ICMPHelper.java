@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.nio.file.StandardCopyOption;
 
 import static com.hazelcast.internal.nio.IOUtil.getFileFromResourcesAsStream;
 import static com.hazelcast.internal.util.ExceptionUtil.rethrow;
-import static com.hazelcast.internal.util.JVMUtil.is32bitJVM;
+import static com.hazelcast.internal.tpcengine.util.JVM.is32bit;
 import static com.hazelcast.internal.tpcengine.util.OS.osName;
 import static com.hazelcast.internal.tpcengine.util.OS.isUnixFamily;
 
@@ -62,7 +62,7 @@ public final class ICMPHelper {
             throw new IllegalStateException("ICMP not supported in this platform: " + osName());
         }
 
-        return is32bitJVM()
+        return is32bit()
                 ? "lib/linux-x86/libicmp_helper.so"
                 : "lib/linux-x86_64/libicmp_helper.so";
     }

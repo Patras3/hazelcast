@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -352,12 +352,12 @@ public final class OptUtils {
 
     private static RelDataType convertCustomType(QueryDataType type, RelDataTypeFactory typeFactory) {
         Map<String, HazelcastObjectType> typeMap = new HashMap<>();
-        RelDataType converted = convertCustomType(type, typeFactory, typeMap);
-        typeMap.values().forEach(HazelcastObjectType::finalizeFields);
+        HazelcastObjectType converted = convertCustomType(type, typeFactory, typeMap);
+        HazelcastObjectType.finalizeFields(typeMap.values());
         return converted;
     }
 
-    private static RelDataType convertCustomType(
+    private static HazelcastObjectType convertCustomType(
             QueryDataType type,
             RelDataTypeFactory typeFactory,
             Map<String, HazelcastObjectType> typeMap

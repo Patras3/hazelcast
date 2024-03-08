@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.hazelcast.jet.sql.impl.opt;
 
 import com.hazelcast.jet.sql.SqlTestSupport;
-import com.hazelcast.jet.sql.impl.CalciteSqlOptimizer;
+import com.hazelcast.jet.sql.impl.CalciteSqlOptimizerImpl;
 import com.hazelcast.jet.sql.impl.OptimizerContext;
 import com.hazelcast.jet.sql.impl.connector.generator.StreamSqlConnector;
 import com.hazelcast.jet.sql.impl.inject.PrimitiveUpsertTargetDescriptor;
@@ -118,7 +118,7 @@ public abstract class OptimizerTestSupport extends SqlTestSupport {
         LogicalRel logicalRel = optimizeLogicalInternal(sql, context);
         PhysicalRel physicalRel = (PhysicalRel) context
                 .optimize(logicalRel, PhysicalRules.getRuleSet(), OptUtils.toPhysicalConvention(logicalRel.getTraitSet()));
-        physicalRel = CalciteSqlOptimizer.postOptimizationRewrites(physicalRel);
+        physicalRel = CalciteSqlOptimizerImpl.postOptimizationRewrites(physicalRel);
         return new Result(logicalRel, physicalRel);
     }
 

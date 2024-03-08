@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,20 @@ public interface ILogger extends TpcLogger {
         }
     }
 
+    /** @see #fine(String, Object) */
+    default void fine(String template, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
+        if (isFineEnabled()) {
+            fine(String.format(template, arg1, arg2, arg3, arg4, arg5));
+        }
+    }
+
+    /** @see #fine(String, Object) */
+    default void fine(String template, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
+        if (isFineEnabled()) {
+            fine(String.format(template, arg1, arg2, arg3, arg4, arg5, arg6));
+        }
+    }
+
     /**
      * Logs to {@link #finest(String)} using a lazily evaluated {@code template} {@link String} with arguments, formatted using
      * {@link String#format(String, Object...)}
@@ -97,6 +111,20 @@ public interface ILogger extends TpcLogger {
     default void finest(String template, Object arg1, Object arg2, Object arg3, Object arg4) {
         if (isFinestEnabled()) {
             finest(String.format(template, arg1, arg2, arg3, arg4));
+        }
+    }
+
+    /** @see #finest(String, Object) */
+    default void finest(String template, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
+        if (isFinestEnabled()) {
+            finest(String.format(template, arg1, arg2, arg3, arg4, arg5));
+        }
+    }
+
+    /** @see #finest(String, Object) */
+    default void finest(String template, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
+        if (isFinestEnabled()) {
+            finest(String.format(template, arg1, arg2, arg3, arg4, arg5, arg6));
         }
     }
 }

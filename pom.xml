@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+  ~ Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
     <groupId>com.hazelcast</groupId>
     <artifactId>hazelcast-root</artifactId>
     <packaging>pom</packaging>
-    <version>5.4.0-SNAPSHOT</version>
+    <version>5.5.0-SNAPSHOT</version>
     <name>Hazelcast Root</name>
     <description>Hazelcast In-Memory DataGrid</description>
     <url>http://www.hazelcast.com/</url>
@@ -43,7 +43,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hazelcast.module.name>com.hazelcast.core</hazelcast.module.name>
 
-        <jdk.version>11</jdk.version>
+        <jdk.version>17</jdk.version>
         <target.dir>target</target.dir>
         <maven.build.timestamp.format>yyyyMMdd</maven.build.timestamp.format>
         <timestamp>${maven.build.timestamp}</timestamp>
@@ -53,10 +53,10 @@
         <hazelcast.serverMainClass>com.hazelcast.core.server.HazelcastMemberStarter</hazelcast.serverMainClass>
         <hazelcast.previous.version>5.3.0</hazelcast.previous.version>
 
-        <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
         <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
         <maven.source.plugin.version>3.3.0</maven.source.plugin.version>
-        <maven.javadoc.plugin.version>3.6.2</maven.javadoc.plugin.version>
+        <maven.javadoc.plugin.version>3.6.3</maven.javadoc.plugin.version>
         <maven.javadoc.plugin.excludePackageNames>
             *.impl:*.impl.*:*.internal:*.internal.*:*.operations:*.proxy:
             com.hazelcast.aws.security:*.handlermigration:*.client.connection.nio:
@@ -69,57 +69,56 @@
         <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
         <maven.rar.plugin.version>2.2</maven.rar.plugin.version>
         <maven.bundle.plugin.version>5.1.9</maven.bundle.plugin.version>
-        <maven.shade.plugin.version>3.5.1</maven.shade.plugin.version>
+        <maven.shade.plugin.version>3.5.2</maven.shade.plugin.version>
         <maven.dependency.plugin.version>3.6.1</maven.dependency.plugin.version>
         <maven.animal.sniffer.plugin.version>1.22</maven.animal.sniffer.plugin.version>
         <maven.git.commit.id.plugin.version>2.1.10</maven.git.commit.id.plugin.version>
         <maven.deploy.plugin.version>3.1.1</maven.deploy.plugin.version>
 
-        <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
         <maven.checkstyle.plugin.version>3.3.1</maven.checkstyle.plugin.version>
         <maven.jacoco.plugin.version>0.8.11</maven.jacoco.plugin.version>
-        <maven.failsafe.plugin.version>3.2.2</maven.failsafe.plugin.version>
+        <maven.failsafe.plugin.version>3.2.5</maven.failsafe.plugin.version>
         <maven.cobertura.plugin.version>2.7</maven.cobertura.plugin.version>
         <maven.enforcer.plugin.version>3.4.1</maven.enforcer.plugin.version>
         <maven.os.plugin.version>1.7.1</maven.os.plugin.version>
         <maven.protobuf.plugin.version>0.6.1</maven.protobuf.plugin.version>
         <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
-        <owasp.dependency-check.version>8.4.3</owasp.dependency-check.version>
-        <codehause.license.plugin.version>2.3.0</codehause.license.plugin.version>
+        <owasp.dependency-check.version>9.0.9</owasp.dependency-check.version>
+        <codehause.license.plugin.version>2.4.0</codehause.license.plugin.version>
 
         <!-- Third-party dependencies (sorted alphabetically) -->
         <!--<affinity.version>3.2.3</affinity.version>-->
         <antlr4.version>4.9.3</antlr4.version>
         <avro.version>1.11.3</avro.version>
-        <aws.sdk.version>1.12.595</aws.sdk.version>
+        <aws.sdk.version>1.12.669</aws.sdk.version>
         <calcite.version>1.35.0</calcite.version>
         <classgraph.version>4.8.165</classgraph.version>
-        <debezium.version>1.9.7.Final</debezium.version>
-        <grpc.version>1.59.0</grpc.version>
-        <guava.version>32.1.3-jre</guava.version>
+        <debezium.version>1.9.8.Final</debezium.version>
+        <grpc.version>1.60.0</grpc.version>
+        <guava.version>33.0.0-jre</guava.version>
         <hadoop.version>3.3.6</hadoop.version>
         <h2.version>2.2.224</h2.version>
         <!-- The Jackson version must match the version in EE, if you change this you must send EE PR as well -->
         <jackson.version>2.14.2</jackson.version>
         <jackson.mapper.asl.version>1.9.14.jdk17-redhat-00001</jackson.mapper.asl.version>
         <jaxb.version>2.3.1</jaxb.version>
-        <jline.version>3.24.1</jline.version>
+        <jline.version>3.25.1</jline.version>
         <jms.api.version>3.1.0</jms.api.version>
         <json-surfer.version>0.11</json-surfer.version>
         <jsr107.api.version>1.1.1</jsr107.api.version> <!-- JCache -->
-        <jsr250.api.version>1.2</jsr250.api.version> <!-- javax.annotations -->
-        <kafka.version>3.4.1</kafka.version>
-        <kotlin.version>1.9.20</kotlin.version>
+        <kafka.version>3.6.1</kafka.version>
+        <kotlin.version>1.9.22</kotlin.version>
         <reload4j.version>1.2.25</reload4j.version>
-        <mssql.version>12.4.2.jre11</mssql.version>
-        <mysql.connector.version>8.2.0</mysql.connector.version>
-        <netty.version>4.1.101.Final</netty.version>
+        <mssql.version>12.6.1.jre11</mssql.version>
+        <mysql.connector.version>8.3.0</mysql.connector.version>
+        <netty.version>4.1.107.Final</netty.version>
         <objenesis.version>3.3</objenesis.version>
-        <oracle.version>21.11.0.0</oracle.version>
+        <oracle.version>23.3.0.23.09</oracle.version>
         <osgi.version>4.2.0</osgi.version>
         <parquet.version>1.13.1</parquet.version>
         <picocli.version>4.7.5</picocli.version>
-        <postgresql.version>42.7.0</postgresql.version>
+        <postgresql.version>42.7.2</postgresql.version>
         <prometheus.version>0.20.0</prometheus.version>
 
         <!--
@@ -127,40 +126,39 @@
         See https://developers.google.com/protocol-buffers/docs/news/2022-05-06
         -->
         <protobuf.version>23.2</protobuf.version>
-        <java.protobuf.version>3.25.1</java.protobuf.version>
+        <java.protobuf.version>3.25.3</java.protobuf.version>
         <python.protobuf.version>4.${protobuf.version}</python.protobuf.version>
 
         <scala.version>2.13</scala.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.12</slf4j.version>
         <spring.version>4.3.0.RELEASE</spring.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <snakeyaml.engine.version>2.7</snakeyaml.engine.version>
         <mongodb.version>4.11.1</mongodb.version>
 
         <!-- test dependencies -->
-        <activemq-artemis.version>2.31.2</activemq-artemis.version>
-        <assertj.version>3.24.2</assertj.version>
+        <activemq-artemis.version>2.32.0</activemq-artemis.version>
+        <assertj.version>3.25.3</assertj.version>
         <atomikos.version>3.9.3</atomikos.version>
-        <bytebuddy.version>1.14.10</bytebuddy.version>
-        <commons-codec.version>1.16.0</commons-codec.version>
-        <commons-io.version>2.15.0</commons-io.version>
+        <bytebuddy.version>1.14.12</bytebuddy.version>
+        <commons-codec.version>1.16.1</commons-codec.version>
+        <commons-io.version>2.15.1</commons-io.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
-        <confluent.version>7.4.0</confluent.version>
+        <confluent.version>7.6.0</confluent.version>
         <felix.utils.version>1.11.6</felix.utils.version>
         <findbugs.annotations.version>3.0.1u2</findbugs.annotations.version>
         <http.core.version>4.4.16</http.core.version>
         <http.client.version>4.5.14</http.client.version>
         <jsr107.tck.version>1.1.1</jsr107.tck.version>
-        <mockito.version>5.7.0</mockito.version>
+        <mockito.version>5.10.0</mockito.version>
         <reflections.version>0.9.10</reflections.version>
-        <testcontainers.version>1.19.3</testcontainers.version>
-        <jna.version>5.13.0</jna.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
+        <jna.version>5.14.0</jna.version>
         <!--  When updating archunit.version, check/remove Java version assumptions in ArchUnitRulesTest.java -->
-        <archunit.version>1.2.0</archunit.version>
-        <errorprone.version>2.23.0</errorprone.version>
+        <archunit.version>1.2.1</archunit.version>
+        <errorprone.version>2.25.0</errorprone.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <kubernetes-server-mock.version>6.9.2</kubernetes-server-mock.version>
-        <hikari.version>4.0.3</hikari.version>
+        <hikari.version>5.1.0</hikari.version>
 
         <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
 
@@ -174,7 +172,7 @@
         <hazelcast.module.name>ALL-UNNAMED</hazelcast.module.name>
 
         <!-- needed for CheckStyle -->
-        <checkstyle.version>10.12.2</checkstyle.version>
+        <checkstyle.version>10.14.0</checkstyle.version>
         <checkstyle.configLocation>${main.basedir}/checkstyle/checkstyle.xml</checkstyle.configLocation>
         <checkstyle.supressionsLocation>${main.basedir}/checkstyle/suppressions.xml</checkstyle.supressionsLocation>
         <checkstyle.headerLocation>${main.basedir}/checkstyle/ClassHeaderApache.txt</checkstyle.headerLocation>
@@ -210,7 +208,6 @@
             --add-opens java.base/sun.nio.ch=${hazelcast.module.name}
             --add-opens java.base/java.lang=${hazelcast.module.name}
             --add-opens java.management/sun.management=${hazelcast.module.name}
-            --illegal-access=deny
         </javaModuleArgs>
     </properties>
     <licenses>
@@ -348,6 +345,9 @@
                     <testExcludes>
                         <exclude>**/package-info.java</exclude>
                     </testExcludes>
+                    <compilerArgs>
+                        <arg>-Xlint:-deprecation,-removal</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -402,6 +402,11 @@
                     </excludedGroups>
                     <!-- Use TCP for IPC communication to avoid warnings: Corrupted STDOUT by directly writing... -->
                     <forkNode implementation="org.apache.maven.plugin.surefire.extensions.SurefireForkNodeFactory"/>
+                    <!-- Fixes missing parameters in test name for tests run via mvn -->
+                    <statelessTestsetReporter
+                            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                    </statelessTestsetReporter>
                 </configuration>
             </plugin>
 
@@ -449,15 +454,15 @@
                         </goals>
                         <configuration>
                             <rules>
-                                    <dependencyConvergence>
-                                        <excludedScopes>
-                                            <scope>compile</scope>
-                                            <scope>runtime</scope>
-                                        </excludedScopes>
-                                        <includes>
-                                            <include>junit</include>
-                                        </includes>
-                                    </dependencyConvergence>
+                                <dependencyConvergence>
+                                    <excludedScopes>
+                                        <scope>compile</scope>
+                                        <scope>runtime</scope>
+                                    </excludedScopes>
+                                    <includes>
+                                        <include>junit</include>
+                                    </includes>
+                                </dependencyConvergence>
                             </rules>
                         </configuration>
                     </execution>
@@ -469,30 +474,10 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <!-- JDK 11+ is required for compilation. -->
-                                    <version>[11,)</version>
+                                    <version>[${jdk.version},)</version>
                                 </requireJavaVersion>
                                 <enforceBytecodeVersion>
-                                    <maxJdkVersion>11</maxJdkVersion>
-                                    <excludes>
-                                        <!--
-                                        The archunit library containse several classes to process JDK9 modules.
-                                        It is a test dependency and can be ignored.
-                                        -->
-                                        <exclude>com.tngtech.archunit:archunit</exclude>
-                                    </excludes>
-                                    <ignoreClasses>
-                                        <!--
-                                        Some dependencies contain JDK9 specific classes with JDK9 in the name
-                                        e.g. wiremock.org.eclipse.jetty.alpn.java.server.JDK9ServerALPNProcessor
-                                        -->
-                                        <ignoreClass>*JDK9*</ignoreClass>
-                                        <!--
-                                        Classes from org:mongodb:bson-record-codec to map record to bson.
-                                        Ignoring whole package, because we shade the module into hazelcast-jet-mongodb.
-                                        -->
-                                        <ignoreClass>org.bson.codecs.record.*</ignoreClass>
-                                    </ignoreClasses>
+                                    <maxJdkVersion>${jdk.version}</maxJdkVersion>
                                 </enforceBytecodeVersion>
                             </rules>
                         </configuration>
@@ -502,10 +487,6 @@
                     <dependency>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>extra-enforcer-rules</artifactId>
-                        <!--
-                        Version 1.6.1 produces harmless, but noisy warning about missing dependencies.
-                        See https://github.com/mojohaus/extra-enforcer-rules/issues/225
-                        -->
                         <version>1.7.0</version>
                     </dependency>
                 </dependencies>
@@ -760,12 +741,8 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${maven.javadoc.plugin.version}</version>
                     <configuration>
-                        <!--
-                         JavaDoc generation fails on JDK 11 with very strange errors, e.g. that classes
-                         cannot be compiled (while compile works).
-                         Please see https://github.com/hazelcast/hazelcast/pull/24621
-                         -->
-                        <source>8</source>
+                        <!-- Allows generation when non-JPMS dependencies (e.g. Groovy) are on classpath -->
+                        <legacyMode>true</legacyMode>
                         <detectJavaApiLink>false</detectJavaApiLink>
                         <maxmemory>1024</maxmemory>
                         <excludePackageNames>${maven.javadoc.plugin.excludePackageNames}</excludePackageNames>
@@ -891,6 +868,11 @@
                                     <systemPropertyVariables>
                                         <multipleJVM>true</multipleJVM>
                                     </systemPropertyVariables>
+                                    <!-- Fixes missing parameters in test name for tests run via mvn -->
+                                    <statelessTestsetReporter
+                                            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                                    </statelessTestsetReporter>
                                 </configuration>
                             </execution>
                             <execution>
@@ -924,6 +906,11 @@
                                         com.hazelcast.test.annotation.NightlyTest,
                                         com.hazelcast.test.annotation.ParallelJVMTest
                                     </excludedGroups>
+                                    <!-- Fixes missing parameters in test name for tests run via mvn -->
+                                    <statelessTestsetReporter
+                                            implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                                    </statelessTestsetReporter>
                                 </configuration>
                             </execution>
                         </executions>
@@ -967,7 +954,50 @@
 
         <profile>
             <id>pr-builder</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>usercodedeployment-child-parent</id>
+                                <configuration>
+                                    <skipAssembly>false</skipAssembly>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>usercodedeployment-entry-processor-with-anonymous-and-inner</id>
+                                <configuration>
+                                    <skipAssembly>false</skipAssembly>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>usercodedeployment-incrementing-entry-processor</id>
+                                <configuration>
+                                    <skipAssembly>false</skipAssembly>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>usercodedeployment-incrementing-entry-processor-conflicting</id>
+                                <configuration>
+                                    <skipAssembly>false</skipAssembly>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>usercodedeployment-shaded-classes</id>
+                                <configuration>
+                                    <skipAssembly>false</skipAssembly>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
             <properties>
+                <!--
+                    To improve PR builder runtime, skip *some* assembly-plugins that are not required for build validation
+                    https://github.com/hazelcast/hazelcast/pull/18521
+                -->
                 <assembly.skipAssembly>true</assembly.skipAssembly>
                 <!-- Set the classifier to empty in this profile to use regular jar-->
                 <fat.dependency.classifier/>
@@ -1008,6 +1038,11 @@
                                 com.hazelcast.test.annotation.SlowTest,
                                 com.hazelcast.test.annotation.NightlyTest
                             </excludedGroups>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
 
@@ -1096,6 +1131,11 @@
                             <includes>
                                 <include>**/YourTestFileHear.java</include>
                             </includes>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1172,6 +1212,11 @@
                             <excludedGroups>
                                 com.hazelcast.test.annotation.NightlyTest
                             </excludedGroups>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
 
@@ -1245,8 +1290,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <!-- do not update to 1.6.10, it blocks release process -->
-                        <version>1.6.10</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>release-repository</serverId>
@@ -1327,6 +1371,11 @@
                                 <exclude>**/**IT.java</exclude>
                                 <exclude>**/jsr/**.java</exclude>
                             </excludes>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -1395,6 +1444,11 @@
                                 <exclude>**/jsr/**.java</exclude>
                                 <exclude>**/**IT.java</exclude>
                             </excludes>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -1495,6 +1549,11 @@
                                 com.hazelcast.test.annotation.NightlyTest,
                                 com.hazelcast.test.annotation.SerializationSamplesExcluded
                             </excludedGroups>
+                            <!-- Fixes missing parameters in test name for tests run via mvn -->
+                            <statelessTestsetReporter
+                                    implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                                <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                            </statelessTestsetReporter>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -1544,7 +1603,6 @@
                     --add-opens java.base/java.lang=${hazelcast.module.name}
                     --add-opens java.management/sun.management=${hazelcast.module.name}
                     --add-exports jdk.management/com.ibm.lang.management.internal=${hazelcast.module.name}
-                    --illegal-access=deny
                 </javaModuleArgs>
             </properties>
         </profile>
@@ -1553,6 +1611,10 @@
     <distributionManagement>
         <repository>
             <id>release-repository</id>
+            <!-- Irrespective of this configuration, nexus-staging-maven-plugin
+            will *also* deploy to it's own staging destination, configured in
+            //project//plugin[artifactId='nexus-staging-maven-plugin']/configuration/nexusUrl
+            (i.e. Maven central) -->
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
         <snapshotRepository>
@@ -1656,7 +1718,7 @@
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-bom</artifactId>
-                <version>9.4.53.v20231009</version>
+                <version>9.4.54.v20240208</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -1684,21 +1746,21 @@
             <dependency>
                 <groupId>com.google.auth</groupId>
                 <artifactId>google-auth-library-bom</artifactId>
-                <version>1.20.0</version>
+                <version>1.23.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.http-client</groupId>
                 <artifactId>google-http-client-bom</artifactId>
-                <version>1.43.2</version>
+                <version>1.44.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.oauth-client</groupId>
                 <artifactId>google-oauth-client-bom</artifactId>
-                <version>1.34.1</version>
+                <version>1.35.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -1836,12 +1898,12 @@
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
-                <version>1.2</version>
+                <version>1.3.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
-                <version>1.25.0</version>
+                <version>1.26.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
@@ -1851,7 +1913,7 @@
             <dependency>
                 <groupId>joda-time</groupId>
                 <artifactId>joda-time</artifactId>
-                <version>2.12.5</version>
+                <version>2.12.7</version>
             </dependency>
             <dependency>
                 <groupId>org.xerial.snappy</groupId>
@@ -1861,7 +1923,7 @@
             <dependency>
                 <groupId>com.google.api.grpc</groupId>
                 <artifactId>proto-google-common-protos</artifactId>
-                <version>2.28.0</version>
+                <version>2.36.0</version>
             </dependency>
             <dependency>
                 <groupId>com.microsoft.sqlserver</groupId>
@@ -1897,7 +1959,7 @@
             <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
-                <version>9.37.1</version>
+                <version>9.37.3</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.woodstox</groupId>
@@ -1932,7 +1994,7 @@
             <dependency>
                 <groupId>com.github.luben</groupId>
                 <artifactId>zstd-jni</artifactId>
-                <version>1.5.5-10</version>
+                <version>1.5.5-11</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -1942,7 +2004,7 @@
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-bom</artifactId>
-                <version>2.22.0</version>
+                <version>2.23.0</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -1954,7 +2016,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.40.0</version>
+                <version>3.42.0</version>
             </dependency>
             <dependency>
                 <groupId>org.antlr</groupId>
@@ -1994,12 +2056,12 @@
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client</artifactId>
-                <version>2.2.0</version>
+                <version>1.32.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.api.grpc</groupId>
                 <artifactId>proto-google-iam-v1</artifactId>
-                <version>1.23.0</version>
+                <version>1.29.0</version>
             </dependency>
             <!-- Force higher version, compatible with M1 -->
             <!-- Otherwise Docker for Java (used by TestContainers) is not able to load all JNA files for aarch64 -->
@@ -2030,14 +2092,20 @@
             <dependency>
                 <groupId>org.javassist</groupId>
                 <artifactId>javassist</artifactId>
-                <version>3.29.2-GA</version>
+                <version>3.30.2-GA</version>
             </dependency>
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.10.1</version>
+                <version>5.10.2</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit-pioneer</groupId>
+                <artifactId>junit-pioneer</artifactId>
+                <version>2.2.0</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -2088,13 +2156,22 @@
             </dependency>
             <dependency>
                 <groupId>io.fabric8</groupId>
-                <artifactId>kubernetes-server-mock</artifactId>
-                <version>${kubernetes-server-mock.version}</version>
+                <artifactId>kubernetes-client-bom</artifactId>
+                <version>6.10.0</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.j2objc</groupId>
                 <artifactId>j2objc-annotations</artifactId>
                 <version>2.8</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -2130,9 +2207,20 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit-pioneer</groupId>
+            <artifactId>junit-pioneer</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>uk.org.webcompere</groupId>
+            <artifactId>system-stubs-jupiter</artifactId>
+            <version>2.1.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -2186,13 +2274,13 @@
         <dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier</artifactId>
-            <version>3.8</version>
+            <version>3.15.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>
-            <version>10.1.16</version>
+            <version>10.1.19</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

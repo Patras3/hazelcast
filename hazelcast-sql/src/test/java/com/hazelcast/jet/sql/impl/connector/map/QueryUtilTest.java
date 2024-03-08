@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import javax.security.auth.Subject;
-
 import static com.hazelcast.jet.sql.impl.connector.map.QueryUtil.toPredicate;
-import static java.util.Collections.emptySet;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,8 +63,8 @@ public class QueryUtilTest extends SqlTestSupport {
 
         var evalContextMock = mock(ExpressionEvalContext.class);
         when(evalContextMock.getSerializationService()).thenReturn(mock());
-        var subject = new Subject(true, emptySet(), emptySet(), emptySet());
-        when(evalContextMock.subject()).thenReturn(subject);
+        when(evalContextMock.getArguments()).thenReturn(emptyList());
+        when(evalContextMock.getNodeEngine()).thenReturn(mock());
 
         var supplier = KvRowProjector.supplier(
                 new QueryPath[]{},
@@ -83,8 +81,7 @@ public class QueryUtilTest extends SqlTestSupport {
 
         assertThat(actual)
                 .usingRecursiveComparison()
-                .comparingOnlyFields("rowProjectorSupplier", "arguments", "subject")
-                .ignoringFields("subject.pubCredentials", "subject.privCredentials")
+                .comparingOnlyFields("arguments")
                 .isEqualTo(projection);
     }
 }

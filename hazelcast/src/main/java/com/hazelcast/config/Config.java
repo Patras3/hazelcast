@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.hazelcast.config;
 import com.hazelcast.collection.IList;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ISet;
+import com.hazelcast.config.rest.RestConfig;
 import com.hazelcast.config.tpc.TpcConfig;
 import com.hazelcast.config.cp.CPSubsystemConfig;
 import com.hazelcast.config.matcher.MatchingPointConfigPatternMatcher;
@@ -111,6 +112,8 @@ public class Config {
      * Default cluster name.
      */
     public static final String DEFAULT_CLUSTER_NAME = "dev";
+
+    protected UserCodeNamespacesConfig userCodeNamespacesConfig = new UserCodeNamespacesConfig();
 
     private URL configurationUrl;
 
@@ -225,6 +228,10 @@ public class Config {
 
     // @since 5.3
     private TpcConfig tpcConfig = new TpcConfig();
+
+    // @since 5.4
+    @Beta
+    private RestConfig restConfig = new RestConfig();
 
     public Config() {
     }
@@ -3230,6 +3237,26 @@ public class Config {
     }
 
     /**
+     * @return the namespaces configuration object
+     * @since 5.4.0
+     */
+    public UserCodeNamespacesConfig getNamespacesConfig() {
+        return userCodeNamespacesConfig;
+    }
+
+    /**
+     * Sets the namespaces configuration.
+     * Internal API used for Spring configuration.
+     *
+     * @since 5.4.0
+     */
+    @PrivateApi
+    public @Nonnull Config setNamespacesConfig(@Nonnull UserCodeNamespacesConfig userCodeNamespacesConfig) {
+        this.userCodeNamespacesConfig = checkNotNull(userCodeNamespacesConfig);
+        return this;
+    }
+
+    /**
      * Gets the TpcConfig. Can't return null.
      *
      * @return the TpcConfig.
@@ -3252,6 +3279,29 @@ public class Config {
     @Beta
     public @Nonnull Config setTpcConfig(@Nonnull TpcConfig tpcConfig) {
         this.tpcConfig = checkNotNull(tpcConfig);
+        return this;
+    }
+
+    /**
+     * Gets the configuration for the REST API server.
+     *
+     * @return the RestConfig.
+     */
+    @Beta
+    public RestConfig getRestConfig() {
+        return restConfig;
+    }
+
+    /**
+     * Sets the configuration for the REST API server.
+     *
+     * @param restConfig the RestConfig.
+     * @return this Config instance
+     * @throws NullPointerException if restConfig is null
+     */
+    @Beta
+    public @Nonnull Config setRestConfig(@Nonnull RestConfig restConfig) {
+        this.restConfig = checkNotNull(restConfig, "RestConfig cannot be null!");
         return this;
     }
 
@@ -3295,6 +3345,7 @@ public class Config {
                 + ", cardinalityEstimatorConfigs=" + cardinalityEstimatorConfigs
                 + ", flakeIdGeneratorConfigMap=" + flakeIdGeneratorConfigMap
                 + ", pnCounterConfigs=" + pnCounterConfigs
+                + ", namespacesConfig=" + userCodeNamespacesConfig
                 + ", advancedNetworkConfig=" + advancedNetworkConfig
                 + ", servicesConfig=" + servicesConfig
                 + ", securityConfig=" + securityConfig
@@ -3320,6 +3371,8 @@ public class Config {
                 + ", integrityCheckerConfig=" + integrityCheckerConfig
                 + ", dataConnectionConfigs=" + dataConnectionConfigs
                 + ", tpcConfig=" + tpcConfig
+                + ", namespacesConfig=" + userCodeNamespacesConfig
+                + ", restConfig=" + restConfig
                 + '}';
     }
 }

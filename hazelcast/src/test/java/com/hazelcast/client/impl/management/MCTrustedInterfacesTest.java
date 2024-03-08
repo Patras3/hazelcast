@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class MCTrustedInterfacesTest extends HazelcastTestSupport {
 
         ClientMessage clientMessage = MCAddWanBatchPublisherConfigCodec.encodeRequest(randomString(), randomString(),
                 randomString(), randomString(), random.nextInt(), random.nextInt(), random.nextInt(), random.nextInt(),
-                random.nextInt(), random.nextInt());
+                random.nextInt(), random.nextInt(), (byte) random.nextInt(2));
 
         assertFailureOnUntrustedInterface(clientMessage);
     }
@@ -286,7 +286,7 @@ public class MCTrustedInterfacesTest extends HazelcastTestSupport {
 
     @Test
     public void testUpdateMapConfigMessageTask() throws Exception {
-        assertFailureOnUntrustedInterface(MCUpdateMapConfigCodec.encodeRequest(randomString(), 100, 200, 0, false, 100, 0));
+        assertFailureOnUntrustedInterface(MCUpdateMapConfigCodec.encodeRequest(randomString(), 100, 200, 0, false, 100, 0, null));
     }
 
     @Test

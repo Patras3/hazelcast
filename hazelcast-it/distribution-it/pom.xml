@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-it</artifactId>
-        <version>5.4.0-SNAPSHOT</version>
+        <version>5.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>distribution-it</artifactId>
@@ -16,7 +16,7 @@
         <jaxb-core.version>3.0.2</jaxb-core.version>
         <activation.version>1.1.1</activation.version>
         <hsqldb.version>2.7.2</hsqldb.version>
-        <hibernate-core.version>5.3.7.Final</hibernate-core.version>
+        <hibernate-core.version>5.3.20.Final</hibernate-core.version>
         <hazelcast-hibernate53.version>5.1.0</hazelcast-hibernate53.version>
     </properties>
 
@@ -76,17 +76,6 @@
         </dependency>
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.hazelcast</groupId>
-                <artifactId>hazelcast-distribution</artifactId>
-                <version>${project.version}</version>
-                <type>zip</type>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
         <plugins>
             <plugin>
@@ -106,6 +95,7 @@
                                 <artifactItem>
                                     <groupId>com.hazelcast</groupId>
                                     <artifactId>hazelcast-distribution</artifactId>
+                                    <version>${project.version}</version>
                                     <type>zip</type>
                                     <fileMappers>
                                         <org.codehaus.plexus.components.io.filemappers.RegExpFileMapper>

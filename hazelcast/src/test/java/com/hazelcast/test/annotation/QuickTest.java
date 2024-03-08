@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.time.Duration;
  */
 public final class QuickTest {
     public static final Duration EXPECTED_RUNTIME_THRESHOLD = Duration.ofMinutes(1);
+
+    public static final String QUICK_TEST = "com.hazelcast.test.annotation.QuickTest";
 
     public static void logMessageIfTestOverran(FrameworkMethod method, float tookSeconds) {
         if (tookSeconds > QuickTest.EXPECTED_RUNTIME_THRESHOLD.getSeconds()) {

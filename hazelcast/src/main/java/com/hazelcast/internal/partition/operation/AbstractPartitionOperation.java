@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import static java.util.Collections.singleton;
 abstract class AbstractPartitionOperation extends Operation implements IdentifiedDataSerializable {
 
     final Collection<MigrationAwareService> getMigrationAwareServices() {
-        NodeEngineImpl nodeEngine = (NodeEngineImpl) getNodeEngine();
+        NodeEngine nodeEngine = getNodeEngine();
         return nodeEngine.getServices(MigrationAwareService.class);
     }
 
@@ -227,7 +227,7 @@ abstract class AbstractPartitionOperation extends Operation implements Identifie
         assert !(ns instanceof NonFragmentedServiceNamespace) : ns + " should be used only for fragmented services!";
 
         Collection<Operation> operations = emptySet();
-        NodeEngineImpl nodeEngine = (NodeEngineImpl) getNodeEngine();
+        NodeEngine nodeEngine = getNodeEngine();
         for (String serviceName : serviceNames) {
             FragmentedMigrationAwareService service = nodeEngine.getService(serviceName);
             assert service.isKnownServiceNamespace(ns) : ns + " should be known by " + service;

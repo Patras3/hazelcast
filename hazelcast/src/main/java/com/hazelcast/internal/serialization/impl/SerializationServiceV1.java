@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,9 +163,14 @@ public class SerializationServiceV1 extends AbstractSerializationService {
         portableSerializerAdapter = createSerializerAdapter(portableSerializer);
 
         javaSerializerAdapter = createSerializerAdapter(
-                new JavaSerializer(builder.enableSharedObject, builder.enableCompression, builder.classNameFilter));
+                new JavaSerializer(builder.enableSharedObject, builder.enableCompression, builder.classNameSerializationFilter)
+        );
         javaExternalizableAdapter = createSerializerAdapter(
-                new JavaDefaultSerializers.ExternalizableSerializer(builder.enableCompression, builder.classNameFilter));
+                new JavaDefaultSerializers.ExternalizableSerializer(
+                    builder.enableCompression,
+                    builder.classNameSerializationFilter
+                )
+        );
         registerConstantSerializers(builder.isCompatibility());
         registerJavaTypeSerializers(builder.isCompatibility());
 
@@ -414,7 +419,7 @@ public class SerializationServiceV1 extends AbstractSerializationService {
         private Map<Integer, ? extends PortableFactory> portableFactories = Collections.emptyMap();
         private boolean enableCompression;
         private boolean enableSharedObject;
-        private ClassNameFilter classNameFilter;
+        private ClassNameFilter classNameSerializationFilter;
         private boolean checkClassDefErrors;
 
         protected AbstractBuilder() {
@@ -451,7 +456,7 @@ public class SerializationServiceV1 extends AbstractSerializationService {
         }
 
         public final T withClassNameFilter(ClassNameFilter classNameFilter) {
-            this.classNameFilter = classNameFilter;
+            this.classNameSerializationFilter = classNameFilter;
             return self();
         }
 

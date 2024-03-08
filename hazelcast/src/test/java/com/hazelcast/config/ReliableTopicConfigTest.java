@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,7 +239,7 @@ public class ReliableTopicConfigTest {
         String s = config.toString();
 
         assertEquals("ReliableTopicConfig{name='foo', topicOverloadPolicy=BLOCK, executor=null,"
-                + " readBatchSize=10, statisticsEnabled=true, listenerConfigs=[]}", s);
+                + " readBatchSize=10, statisticsEnabled=true, listenerConfigs=[], userCodeNamespace=null}", s);
     }
 
     @Test

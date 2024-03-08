@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.hazelcast.cluster.Address;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.cluster.MemberSelector;
 import com.hazelcast.cluster.MembershipListener;
+import com.hazelcast.internal.cluster.MemberInfo;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
@@ -83,4 +84,12 @@ public interface ClientClusterService {
      * @return true if successfully removed, false otherwise.
      */
     boolean removeMembershipListener(@Nonnull UUID registrationId);
+
+    /**
+     * Updates the members of the cluster with the latest list.
+     * @param memberListVersion The version of the member list
+     * @param memberInfos The list of members
+     * @param clusterUuid The UUID of the cluster
+     */
+    void handleMembersViewEvent(int memberListVersion, Collection<MemberInfo> memberInfos, UUID clusterUuid);
 }

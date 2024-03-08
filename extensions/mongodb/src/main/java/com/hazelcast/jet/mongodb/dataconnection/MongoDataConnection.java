@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ public class MongoDataConnection extends DataConnectionBase {
 
     /**
      * Returns an instance of {@link MongoClient}.
-     *
+     * <p>
      * If client is {@linkplain DataConnectionConfig#isShared()} and there will be still some usages of given client,
      * the {@linkplain MongoClient#close()} method won't take an effect.
      */

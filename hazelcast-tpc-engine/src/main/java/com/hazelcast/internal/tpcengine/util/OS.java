@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.hazelcast.internal.tpcengine.util;
+
+import java.io.File;
 
 /**
  * Utility methods for OS specific functionality.
@@ -161,5 +163,20 @@ public final class OS {
     /** @return {@code true} if the current system is a Windows one. */
     public static boolean isWindows() {
         return IS_WINDOWS;
+    }
+
+    /**
+     * Returns a file path string that replaces Windows `\\` file
+     * separators with the Unix equivalent `/` if the current machine
+     * is using Windows as its Operating System.
+     *
+     * @param path the file path string to convert
+     * @return the file path string, with file separators set to `/`
+     */
+    public static String ensureUnixSeparators(final String path) {
+        if (OS.isWindows()) {
+            return path.replace(File.separatorChar, '/');
+        }
+        return path;
     }
 }

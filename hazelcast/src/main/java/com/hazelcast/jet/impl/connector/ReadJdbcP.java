@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,11 @@ public final class ReadJdbcP<T> extends AbstractProcessor {
     private Traverser<? extends T> traverser;
     private int parallelism;
     private int index;
+
+    static {
+        // workaround for https://github.com/hazelcast/hazelcast-jet/issues/2603
+        DriverManager.getDrivers();
+    }
 
     public ReadJdbcP(
             @Nonnull SupplierEx<? extends Connection> newConnectionFn,
@@ -202,8 +207,6 @@ public final class ReadJdbcP<T> extends AbstractProcessor {
 
     @Override
     protected void init(@Nonnull Context context) {
-        // workaround for https://github.com/hazelcast/hazelcast-jet/issues/2603
-        DriverManager.getDrivers();
         this.connection = newConnectionFn.get();
         this.parallelism = context.totalParallelism();
         this.index = context.globalProcessorIndex();

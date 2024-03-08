@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.hazelcast.nio.serialization.ClassDefinition;
 import com.hazelcast.nio.serialization.FieldDefinition;
 import com.hazelcast.nio.serialization.FieldType;
 import com.hazelcast.nio.serialization.PortableId;
-import com.hazelcast.sql.impl.FieldsUtil;
+import com.hazelcast.sql.impl.FieldUtils;
 import com.hazelcast.sql.impl.QueryException;
 import com.hazelcast.sql.impl.extract.QueryPath;
 import com.hazelcast.sql.impl.schema.MappingField;
@@ -31,7 +31,6 @@ import com.hazelcast.sql.impl.schema.type.Type;
 import com.hazelcast.sql.impl.schema.type.Type.TypeField;
 import com.hazelcast.sql.impl.schema.type.TypeKind;
 import com.hazelcast.sql.impl.type.QueryDataType;
-import com.hazelcast.sql.impl.type.QueryDataType.QueryDataTypeField;
 import com.hazelcast.sql.impl.type.QueryDataTypeUtils;
 import org.apache.avro.Schema;
 
@@ -65,7 +64,7 @@ public final class TypeUtils {
     public static FieldEnricher<?, ?> getFieldEnricher(
             String format,
             InternalSerializationService serializationService,
-            RelationsStorage relationsStorage
+            AbstractRelationsStorage relationsStorage
     ) {
         switch (format) {
             case PORTABLE_FORMAT:
@@ -84,7 +83,7 @@ public final class TypeUtils {
     private static class PortableEnricher extends FieldEnricher<PortableId, ClassDefinition> {
         private final PortableContext context;
 
-        PortableEnricher(RelationsStorage relationsStorage, InternalSerializationService serializationService) {
+        PortableEnricher(AbstractRelationsStorage relationsStorage, InternalSerializationService serializationService) {
             super(TypeKind.PORTABLE, relationsStorage);
             context = serializationService.getPortableContext();
         }
@@ -136,7 +135,7 @@ public final class TypeUtils {
     }
 
     private static class CompactEnricher extends FieldEnricher<String, Void> {
-        CompactEnricher(RelationsStorage relationsStorage) {
+        CompactEnricher(AbstractRelationsStorage relationsStorage) {
             super(TypeKind.COMPACT, relationsStorage);
         }
 
@@ -172,7 +171,7 @@ public final class TypeUtils {
     }
 
     private static class JavaEnricher extends FieldEnricher<Class<?>, SortedMap<String, Class<?>>> {
-        JavaEnricher(RelationsStorage relationsStorage) {
+        JavaEnricher(AbstractRelationsStorage relationsStorage) {
             super(TypeKind.JAVA, relationsStorage);
         }
 
@@ -183,7 +182,7 @@ public final class TypeUtils {
 
         @Override
         protected SortedMap<String, Class<?>> getSchema(Class<?> typeClass) {
-            return FieldsUtil.resolveClass(typeClass);
+            return FieldUtils.resolveClass(typeClass);
         }
 
         @Override
@@ -219,7 +218,7 @@ public final class TypeUtils {
     }
 
     private static class AvroEnricher extends FieldEnricher<Schema, Schema> {
-        AvroEnricher(RelationsStorage relationsStorage) {
+        AvroEnricher(AbstractRelationsStorage relationsStorage) {
             super(TypeKind.AVRO, relationsStorage);
         }
 
@@ -283,26 +282,28 @@ public final class TypeUtils {
      */
     public abstract static class FieldEnricher<ID, S> {
         private final TypeKind typeKind;
-        private final RelationsStorage relationsStorage;
+        private final AbstractRelationsStorage relationsStorage;
 
-        FieldEnricher(TypeKind typeKind, RelationsStorage relationsStorage) {
+        FieldEnricher(TypeKind typeKind, AbstractRelationsStorage relationsStorage) {
             this.typeKind = typeKind;
             this.relationsStorage = relationsStorage;
         }
 
         public void enrich(MappingField field, Map<String, String> mappingOptions, boolean isKey) {
             String typeName = field.type().getObjectTypeName();
+            Map<String, QueryDataType> typeMap = new HashMap<>();
             field.setType(createFieldType(
                     field.name().equals(isKey ? QueryPath.KEY : QueryPath.VALUE)
                             ? () -> getSchemaId(mappingOptions, isKey)
                             : () -> getFieldSchemaId(getSchema(getSchemaId(mappingOptions, isKey)),
                                     plainExternalName(field), typeName),
-                    typeName, new HashMap<>()));
+                    typeName, typeMap));
+            typeMap.values().forEach(QueryDataType::finalizeFields);
         }
 
         protected QueryDataType createFieldType(Supplier<ID> schemaIdSupplier, String typeName,
-                                                Map<String, QueryDataType> seen) {
-            QueryDataType convertedType = seen.get(typeName);
+                                                Map<String, QueryDataType> typeMap) {
+            QueryDataType convertedType = typeMap.get(typeName);
             if (convertedType != null) {
                 return convertedType;
             }
@@ -324,7 +325,7 @@ public final class TypeUtils {
             }
 
             convertedType = new QueryDataType(typeName, typeKind, getTypeMetadata(schemaId));
-            seen.put(typeName, convertedType);
+            typeMap.put(typeName, convertedType);
 
             for (TypeField field : type.getFields()) {
                 QueryDataType fieldType = field.getType();
@@ -332,9 +333,9 @@ public final class TypeUtils {
 
                 if (fieldType.isCustomType()) {
                     fieldType = createFieldType(() -> getFieldSchemaId(schema, field.getName(), fieldTypeName),
-                            fieldTypeName, seen);
+                            fieldTypeName, typeMap);
                 }
-                convertedType.getObjectFields().add(new QueryDataTypeField(field.getName(), fieldType));
+                convertedType.addField(field.getName(), fieldType);
             }
 
             return convertedType;

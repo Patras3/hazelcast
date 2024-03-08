@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -491,15 +491,6 @@ public class ClientClusterServiceImplTest extends HazelcastTestSupport {
         assertCollection(Arrays.asList(masterMember.toMember(), liteMember.toMember(), dataMember.toMember()), clusterService.getMemberList());
         assertCollection(Arrays.asList(liteMember.toMember()), clusterService.getMembers(Member::isLiteMember));
         assertCollection(Arrays.asList(masterMember.toMember(), dataMember.toMember()), clusterService.getMembers(member -> !member.isLiteMember()));
-    }
-
-    @Test
-    public void testWaitInitialMembership() {
-        ClientClusterServiceImpl clusterService = new ClientClusterServiceImpl(mock(ILogger.class));
-        MemberInfo masterMember = member("127.0.0.1");
-        clusterService.handleMembersViewEvent(1, asList(masterMember, liteMember("127.0.0.2"),
-                member("127.0.0.3")), UUID.randomUUID());
-        clusterService.waitInitialMemberListFetched();
     }
 
     @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ import com.hazelcast.sql.impl.SqlErrorCode;
 import com.hazelcast.sql.impl.UpdateSqlResultImpl;
 import com.hazelcast.sql.impl.expression.Expression;
 import com.hazelcast.sql.impl.expression.ExpressionEvalContext;
+import com.hazelcast.sql.impl.expression.UntrustedExpressionEvalContext;
 import com.hazelcast.sql.impl.row.EmptyRow;
 import com.hazelcast.sql.impl.row.JetSqlRow;
 import com.hazelcast.sql.impl.schema.dataconnection.DataConnectionCatalogEntry;
@@ -107,7 +108,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -192,12 +192,13 @@ public class PlanExecutor {
         }
 
         // checks if type is correct
-        dlService.classForDataConnectionType(plan.type());
+        String normalizedTypeName = dlService.normalizedTypeName(plan.type());
+        dlService.classForDataConnectionType(normalizedTypeName);
 
         boolean added = dataConnectionCatalog.createDataConnection(
                 new DataConnectionCatalogEntry(
                         plan.name(),
-                        plan.type().toLowerCase(Locale.ROOT),
+                        normalizedTypeName,
                         plan.shared(),
                         plan.options()),
                 plan.isReplace(),
@@ -575,8 +576,8 @@ public class PlanExecutor {
                       long timeout,
                       @Nonnull SqlSecurityContext ssc) {
         List<Object> args = prepareArguments(plan.getParameterMetadata(), arguments);
-        JobConfig jobConfig = new JobConfig()
-                .setArgument(SQL_ARGUMENTS_KEY_NAME, args)
+        JobConfig jobConfig = plan.isAnalyzed() ? plan.analyzeJobConfig() : new JobConfig();
+        jobConfig.setArgument(SQL_ARGUMENTS_KEY_NAME, args)
                 .setArgument(KEY_SQL_QUERY_TEXT, plan.getQuery())
                 .setArgument(KEY_SQL_UNBOUNDED, plan.isInfiniteRows())
                 .setTimeoutMillis(timeout);
@@ -683,7 +684,7 @@ public class PlanExecutor {
 
         Object key = plan.keyCondition().eval(EmptyRow.INSTANCE, evalContext);
         CompletableFuture<Long> future = hazelcastInstance.getMap(plan.mapName())
-                .submitToKey(key, plan.updaterSupplier().get(evalContext))
+                .submitToKey(key, plan.updaterSupplier().get(UntrustedExpressionEvalContext.from(evalContext)))
                 .toCompletableFuture();
         await(future, timeout);
         directIMapQueriesExecuted.getAndIncrement();

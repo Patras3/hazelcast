@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.hazelcast.jet.test.IgnoreInJenkinsOnWindows;
 import com.hazelcast.sql.SqlResult;
 import com.hazelcast.sql.SqlService;
 import com.hazelcast.test.jdbc.TestDatabaseProvider;
+import com.hazelcast.test.jdbc.TestDatabaseRecordProvider;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
@@ -37,7 +38,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Stream;
 
 import static com.hazelcast.test.DockerTestUtil.assumeDockerEnabled;
@@ -54,6 +54,7 @@ public abstract class JdbcSqlTestSupport extends SqlTestSupport {
     protected static final String TEST_DATABASE_REF = "testDatabaseRef";
 
     protected static TestDatabaseProvider databaseProvider;
+    protected static TestDatabaseRecordProvider recordProvider;
 
     protected static String dbConnectionUrl;
     protected static SqlService sqlService;
@@ -71,13 +72,12 @@ public abstract class JdbcSqlTestSupport extends SqlTestSupport {
 
     public static void initialize(TestDatabaseProvider provider, Config config) {
         databaseProvider = provider;
-        dbConnectionUrl = databaseProvider.createDatabase(JdbcSqlTestSupport.class.getName());
-        Properties properties = new Properties();
-        properties.setProperty("jdbcUrl", dbConnectionUrl);
+        recordProvider = provider.recordProvider();
+        dbConnectionUrl = databaseProvider.createDatabase(JdbcSqlTestSupport.class.getSimpleName());
         config.addDataConnectionConfig(
                 new DataConnectionConfig(TEST_DATABASE_REF)
-                        .setType("jdbc")
-                        .setProperties(properties)
+                        .setType(databaseProvider.dataConnectionType())
+                        .setProperties(databaseProvider.properties())
         );
         initialize(2, config);
         sqlService = instance().getSql();
@@ -90,6 +90,13 @@ public abstract class JdbcSqlTestSupport extends SqlTestSupport {
             databaseProvider = null;
             dbConnectionUrl = null;
         }
+    }
+
+    /**
+     * Return url for the database for the existing container
+     */
+    protected static String urlForDatabaseName(String databaseName) {
+        return dbConnectionUrl.replace(JdbcSqlTestSupport.class.getSimpleName(), databaseName);
     }
 
     @Nonnull
@@ -160,18 +167,18 @@ public abstract class JdbcSqlTestSupport extends SqlTestSupport {
         requireNonNull(dbConnectionUrl, "dbConnectionUrl must be set");
         //Put the table name in quotations
         String[] substrings = sql.split(" ");
-        String finalSql = "";
+        StringBuilder finalSql = new StringBuilder();
         for (String str : substrings) {
             if (str.equals(tableName)) {
-                finalSql += (quote(str) + " ") ;
+                finalSql.append(quote(str)).append(" ");
             } else {
-                finalSql += (str + " ");
+                finalSql.append(str).append(" ");
             }
         }
         try (Connection conn = DriverManager.getConnection(dbConnectionUrl);
              Statement stmt = conn.createStatement()
         ) {
-            stmt.execute(finalSql);
+            stmt.execute(finalSql.toString());
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,8 +229,9 @@ public class HazelcastClientInstanceImpl implements HazelcastInstance, Serializa
         HazelcastProperties props = new HazelcastProperties(config.getProperties());
         String loggingType = props.getString(ClusterProperty.LOGGING_TYPE);
         boolean detailsEnabled = props.getBoolean(ClusterProperty.LOGGING_ENABLE_DETAILS);
+        boolean shutdownLoggingEnabled = props.getBoolean(ClusterProperty.LOGGING_SHUTDOWN);
         this.loggingService = new ClientLoggingService(config.getClusterName(),
-                loggingType, BuildInfoProvider.getBuildInfo(), instanceName, detailsEnabled);
+                loggingType, BuildInfoProvider.getBuildInfo(), instanceName, detailsEnabled, shutdownLoggingEnabled);
 
         if (clientConfig != null) {
             MetricsConfigHelper.overrideClientMetricsConfig(clientConfig,
@@ -413,9 +414,7 @@ public class HazelcastClientInstanceImpl implements HazelcastInstance, Serializa
 
             ClientConnectionStrategyConfig connectionStrategyConfig = config.getConnectionStrategyConfig();
             boolean asyncStart = connectionStrategyConfig.isAsyncStart();
-            if (!asyncStart) {
-                waitForInitialMembershipEvents();
-            }
+
             connectionManager.tryConnectToAllClusterMembers(!asyncStart);
 
             listenerService.start();
@@ -902,10 +901,6 @@ public class HazelcastClientInstanceImpl implements HazelcastInstance, Serializa
      */
     public boolean shouldCheckUrgentInvocations() {
         return schemaService.hasAnySchemas();
-    }
-
-    public void waitForInitialMembershipEvents() {
-        clusterService.waitInitialMemberListFetched();
     }
 
     public void sendStateToCluster() throws ExecutionException, InterruptedException {

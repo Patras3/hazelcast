@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.hazelcast.map.impl.query;
 
 import com.hazelcast.config.InMemoryFormat;
 import com.hazelcast.core.MemberLeftException;
+import com.hazelcast.internal.namespace.NamespaceUtil;
 import com.hazelcast.internal.partition.IPartition;
 import com.hazelcast.internal.util.ConcurrencyUtil;
 import com.hazelcast.map.impl.MapContainer;
@@ -283,8 +284,10 @@ public class QueryOperation extends AbstractNamedOperation implements ReadonlyOp
             }
 
             String mapName = query.getMapName();
-            queryRunner.beforeOperation(partitionId, mapName);
+            String namespace = MapService.lookupNamespace(getNodeEngine(), mapName);
+            NamespaceUtil.setupNamespace(getNodeEngine(), namespace);
             try {
+                queryRunner.beforeOperation(partitionId, mapName);
                 Result result
                         = queryRunner.runPartitionIndexOrPartitionScanQueryOnGivenOwnedPartition(query, partitionId);
                 future.addResult(partitionId, result);
@@ -292,6 +295,7 @@ public class QueryOperation extends AbstractNamedOperation implements ReadonlyOp
                 future.completeExceptionally(ex);
             } finally {
                 queryRunner.afterOperation(partitionId, mapName);
+                NamespaceUtil.cleanupNamespace(getNodeEngine(), namespace);
             }
         }
     }

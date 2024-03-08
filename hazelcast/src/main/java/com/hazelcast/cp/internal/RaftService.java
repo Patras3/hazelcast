@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 
 package com.hazelcast.cp.internal;
 
+import com.hazelcast.cluster.Address;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.cluster.impl.MemberImpl;
 import com.hazelcast.config.cp.CPSubsystemConfig;
 import com.hazelcast.config.cp.RaftAlgorithmConfig;
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.cp.CPGroup;
 import com.hazelcast.cp.CPGroupId;
 import com.hazelcast.cp.CPMember;
@@ -29,9 +31,11 @@ import com.hazelcast.cp.event.CPMembershipEvent;
 import com.hazelcast.cp.event.CPMembershipListener;
 import com.hazelcast.cp.event.impl.CPGroupAvailabilityEventImpl;
 import com.hazelcast.cp.exception.CPGroupDestroyedException;
+import com.hazelcast.cp.exception.NotLeaderException;
 import com.hazelcast.cp.internal.datastructures.spi.RaftManagedService;
 import com.hazelcast.cp.internal.datastructures.spi.RaftRemoteService;
 import com.hazelcast.cp.internal.exception.CannotRemoveCPMemberException;
+import com.hazelcast.cp.internal.operation.GetCPObjectInfosOp;
 import com.hazelcast.cp.internal.operation.ResetCPMemberOp;
 import com.hazelcast.cp.internal.operation.unsafe.UnsafeStateReplicationOp;
 import com.hazelcast.cp.internal.persistence.CPPersistenceService;
@@ -112,6 +116,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -122,6 +127,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 import static com.hazelcast.cluster.memberselector.MemberSelectors.NON_LOCAL_MEMBER_SELECTOR;
 import static com.hazelcast.cp.CPGroup.DEFAULT_GROUP_NAME;
@@ -172,6 +178,7 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
     private static final long REMOVE_MISSING_MEMBER_TASK_PERIOD_SECONDS = 1;
     private static final int AWAIT_DISCOVERY_STEP_MILLIS = 10;
     private static final long AVAILABILITY_EVENTS_DEDUPLICATION_PERIOD = TimeUnit.MINUTES.toMillis(1);
+    private static final int TRY_COUNT = 10;
 
     private final ReadWriteLock nodeLock = new ReentrantReadWriteLock();
     @Probe(name = CP_METRIC_RAFT_SERVICE_NODES)
@@ -287,6 +294,52 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
         return invocationManager.query(getMetadataGroupId(), new GetActiveRaftGroupByNameOp(name), LINEARIZABLE);
     }
 
+    public CompletableFuture<Collection<String>> getObjectNames(
+            CPGroupId groupId,
+            String serviceName,
+            boolean returnTombstone) {
+
+        RaftNode raftNode = getRaftNode(groupId);
+        if (raftNode != null) {
+            RaftEndpoint endpoint = raftNode.getLeader();
+            if (endpoint == null) {
+                throw new NotLeaderException(groupId, raftNode.getLocalMember(), null);
+            }
+            CPMember cpMember = invocationManager
+                    .getRaftInvocationContext()
+                    .getCPMember(endpoint.getUuid());
+
+            GetCPObjectInfosOp op = new GetCPObjectInfosOp(groupId, serviceName, returnTombstone);
+            return nodeEngine.getOperationService()
+                    .createInvocationBuilder(null, op, cpMember.getAddress())
+                    .setTryCount(TRY_COUNT)
+                    .<Collection<String>>invoke()
+                    .toCompletableFuture();
+        } else {
+            InternalCompletableFuture<CPGroup> cpGroup = getCPGroup(groupId);
+            return cpGroup.thenApplyAsync(group -> {
+                Collection<CPMember> members = group.members();
+                for (CPMember cpMember : members) {
+                    GetCPObjectInfosOp op = new GetCPObjectInfosOp(groupId, serviceName, returnTombstone);
+                    try {
+                        //noinspection unchecked
+                        return (Collection<String>) nodeEngine.getOperationService()
+                                .invokeOnTarget(null, op, cpMember.getAddress())
+                                .get();
+                    } catch (ExecutionException e) {
+                        if (!(e.getCause() instanceof NotLeaderException)) {
+                            throw new HazelcastException(e);
+                        }
+                    } catch (InterruptedException e) {
+                        throw new HazelcastException(e);
+                    }
+                }
+                throw new HazelcastException("Could not retrieve CPObjectInfos");
+            }, nodeEngine.getExecutionService().getExecutor(ExecutionService.ASYNC_EXECUTOR));
+        }
+    }
+
+
     InternalCompletableFuture<Void> resetCPSubsystem() {
         checkState(cpSubsystemEnabled, "CP Subsystem is not enabled!");
 
@@ -303,7 +356,7 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
                     + "Required: " + config.getCPMemberCount() + ", available: " + (members.size() + 1)));
         }
 
-        BiConsumer<Void, Throwable> callback = new BiConsumer<Void, Throwable>() {
+        BiConsumer<Void, Throwable> callback = new BiConsumer<>() {
             final AtomicInteger latch = new AtomicInteger(members.size());
             volatile Throwable failure;
 
@@ -592,7 +645,7 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
     @Override
     public void memberRemoved(MembershipServiceEvent event) {
         publishGroupAvailabilityEvents(event.getMember());
-        updateMissingMembers();
+        addToMissingMembers(event.getMember());
     }
 
 
@@ -650,19 +703,27 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
         }
     }
 
-    void updateMissingMembers() {
+    void addToMissingMembers(MemberImpl member) {
+        // since only the Metadata CP group members keep the active CP member list,
+        // they will be the ones that keep track of missing CP members.
+        Collection<CPMemberInfo> activeMembers = metadataGroupManager.getActiveMembers();
+        updateMissingMembers(activeMembers, address -> member.getAddress().equals(address));
+    }
+
+    void updateMissingMembers(Collection<CPMemberInfo> activeMembers) {
+        ClusterService clusterService = nodeEngine.getClusterService();
+        updateMissingMembers(activeMembers, address -> clusterService.getMember(address) == null);
+    }
+
+    private void updateMissingMembers(Collection<CPMemberInfo> activeMembers, Predicate<Address> addressPredicate) {
         if (skipUpdateMissingMembers()) {
             return;
         }
 
-        // since only the Metadata CP group members keep the active CP member list,
-        // they will be the ones that keep track of missing CP members.
-        Collection<CPMemberInfo> activeMembers = metadataGroupManager.getActiveMembers();
         missingMembers.keySet().retainAll(activeMembers);
 
-        ClusterService clusterService = nodeEngine.getClusterService();
         for (CPMemberInfo cpMember : activeMembers) {
-            if (clusterService.getMember(cpMember.getAddress()) == null) {
+            if (addressPredicate.test(cpMember.getAddress())) {
                 if (missingMembers.putIfAbsent(cpMember, Clock.currentTimeMillis()) == null) {
                     logger.warning(cpMember + " is not present in the cluster. It will be auto-removed from the "
                             + "CP Subsystem after " + config.getMissingCPMemberAutoRemovalSeconds() + " seconds.");
@@ -1039,9 +1100,8 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
                     if (response != null) {
                         future.complete(response.id());
                     } else {
-                        invocationManager.createRaftGroup(groupName).whenCompleteAsync((r, t) -> {
-                            complete(future, r, t);
-                        }, internalAsyncExecutor);
+                        invocationManager.createRaftGroup(groupName).whenCompleteAsync((r, t) ->
+                            complete(future, r, t), internalAsyncExecutor);
                     }
                 } else {
                     complete(future, throwable);
@@ -1102,7 +1162,7 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
         checkTrue(i < (name.length() - 1), "Custom CP group name cannot be empty string");
         checkTrue(name.indexOf("@", i + 1) == -1, "Custom group name must be specified at most once");
         String groupName = name.substring(i + 1).trim();
-        checkTrue(groupName.length() > 0, "Custom CP group name cannot be empty string");
+        checkTrue(!groupName.isEmpty(), "Custom CP group name cannot be empty string");
         checkFalse(equalsIgnoreCase(groupName, METADATA_CP_GROUP_NAME),
                 "CP data structures cannot run on the METADATA CP group!");
         return equalsIgnoreCase(groupName, DEFAULT_GROUP_NAME) ? DEFAULT_GROUP_NAME : groupName;
@@ -1118,7 +1178,7 @@ public class RaftService implements ManagedService, SnapshotAwareService<Metadat
         checkTrue(name.indexOf("@", i + 1) == -1,
                 "Custom CP group name must be specified at most once");
         String objectName = name.substring(0, i).trim();
-        checkTrue(objectName.length() > 0, "Object name cannot be empty string");
+        checkTrue(!objectName.isEmpty(), "Object name cannot be empty string");
         return objectName;
     }
 

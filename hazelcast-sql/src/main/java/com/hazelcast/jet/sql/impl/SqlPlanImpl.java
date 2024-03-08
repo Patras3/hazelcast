@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -1122,7 +1122,9 @@ abstract class SqlPlanImpl extends SqlPlan {
 
         @Override
         public boolean isCacheable() {
-            return !objectKeys.contains(PlanObjectKey.NON_CACHEABLE_OBJECT_KEY);
+            // Do not cache ANALYZE plan to give always the most up-to-date result
+            // and avoid race conditions due to shared, mutable analyzeJobConfig instance.
+            return !isAnalyzed() && !objectKeys.contains(PlanObjectKey.NON_CACHEABLE_OBJECT_KEY);
         }
 
         @Override
@@ -1220,7 +1222,9 @@ abstract class SqlPlanImpl extends SqlPlan {
 
         @Override
         public boolean isCacheable() {
-            return !objectKeys.contains(PlanObjectKey.NON_CACHEABLE_OBJECT_KEY);
+            // Do not cache ANALYZE plan to give always the most up-to-date result
+            // and avoid race conditions due to shared, mutable analyzeJobConfig instance.
+            return !isAnalyzed() && !objectKeys.contains(PlanObjectKey.NON_CACHEABLE_OBJECT_KEY);
         }
 
         @Override
@@ -1466,7 +1470,7 @@ abstract class SqlPlanImpl extends SqlPlan {
 
         @Override
         public void checkPermissions(SqlSecurityContext context) {
-            context.checkPermission(new MapPermission(mapName, ACTION_CREATE, ACTION_PUT, ACTION_REMOVE));
+            context.checkPermission(new MapPermission(mapName, ACTION_CREATE, ACTION_PUT));
             permissions.forEach(context::checkPermission);
         }
 

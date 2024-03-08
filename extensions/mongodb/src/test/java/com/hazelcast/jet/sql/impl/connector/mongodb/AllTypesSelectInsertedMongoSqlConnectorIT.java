@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,11 @@ public class AllTypesSelectInsertedMongoSqlConnectorIT extends MongoSqlIT {
                 {19, "object", "VARCHAR", new Document("test", "abc"), testJson},
                 {20, "object", "VARCHAR", new BsonDocument("test", new BsonString("abc")), testJson}
         });
+    }
+
+    @Override
+    public void supportAfter() {
+        // ignore cleanup, we want this test to run in parallel and it only creates a few mappings
     }
 
     @Test

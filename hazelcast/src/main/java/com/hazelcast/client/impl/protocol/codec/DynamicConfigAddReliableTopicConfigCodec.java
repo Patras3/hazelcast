@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import static com.hazelcast.client.impl.protocol.codec.builtin.FixedSizeTypesCod
  * the new configuration is ignored and the existing one is preserved.
  */
 @SuppressWarnings("unused")
-@Generated("d73cf798be1553eefa38ae12f4a6fac1")
+@Generated("d93997b8ffcd2d16a47b8ba91271521b")
 public final class DynamicConfigAddReliableTopicConfigCodec {
     //hex: 0x1B0D00
     public static final int REQUEST_MESSAGE_TYPE = 1772800;
@@ -87,9 +87,20 @@ public final class DynamicConfigAddReliableTopicConfigCodec {
          * message listeners or {@code null}
          */
         public @Nullable com.hazelcast.internal.serialization.Data executor;
+
+        /**
+         * Name of the User Code Namespace applied to this instance.
+         */
+        public @Nullable java.lang.String userCodeNamespace;
+
+        /**
+         * True if the userCodeNamespace is received from the client, false otherwise.
+         * If this is false, userCodeNamespace has the default value for its type.
+         */
+        public boolean isUserCodeNamespaceExists;
     }
 
-    public static ClientMessage encodeRequest(java.lang.String name, @Nullable java.util.Collection<com.hazelcast.client.impl.protocol.task.dynamicconfig.ListenerConfigHolder> listenerConfigs, int readBatchSize, boolean statisticsEnabled, java.lang.String topicOverloadPolicy, @Nullable com.hazelcast.internal.serialization.Data executor) {
+    public static ClientMessage encodeRequest(java.lang.String name, @Nullable java.util.Collection<com.hazelcast.client.impl.protocol.task.dynamicconfig.ListenerConfigHolder> listenerConfigs, int readBatchSize, boolean statisticsEnabled, java.lang.String topicOverloadPolicy, @Nullable com.hazelcast.internal.serialization.Data executor, @Nullable java.lang.String userCodeNamespace) {
         ClientMessage clientMessage = ClientMessage.createForEncode();
         clientMessage.setContainsSerializedDataInRequest(true);
         clientMessage.setRetryable(false);
@@ -104,6 +115,7 @@ public final class DynamicConfigAddReliableTopicConfigCodec {
         ListMultiFrameCodec.encodeNullable(clientMessage, listenerConfigs, ListenerConfigHolderCodec::encode);
         StringCodec.encode(clientMessage, topicOverloadPolicy);
         CodecUtil.encodeNullable(clientMessage, executor, DataCodec::encode);
+        CodecUtil.encodeNullable(clientMessage, userCodeNamespace, StringCodec::encode);
         return clientMessage;
     }
 
@@ -117,6 +129,12 @@ public final class DynamicConfigAddReliableTopicConfigCodec {
         request.listenerConfigs = ListMultiFrameCodec.decodeNullable(iterator, ListenerConfigHolderCodec::decode);
         request.topicOverloadPolicy = StringCodec.decode(iterator);
         request.executor = CodecUtil.decodeNullable(iterator, DataCodec::decode);
+        if (iterator.hasNext()) {
+            request.userCodeNamespace = CodecUtil.decodeNullable(iterator, StringCodec::decode);
+            request.isUserCodeNamespaceExists = true;
+        } else {
+            request.isUserCodeNamespaceExists = false;
+        }
         return request;
     }
 

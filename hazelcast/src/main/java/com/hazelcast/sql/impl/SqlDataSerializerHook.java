@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,14 @@ public class SqlDataSerializerHook implements DataSerializerHook {
     public static final int TYPE_FIELD = 64;
     public static final int ROW_VALUE = 66;
     public static final int QUERY_DATA_TYPE_FIELD = 67;
+    public static final int PREDEFINED_QUERY_DATA_TYPE_BASE = 68;
+    /**
+     * There can be at most {@value com.hazelcast.sql.impl.type.converter.Converters#MAX_CONVERTER_COUNT}
+     * predefined QueryDataType's. Currently, there are 26 of them.
+     */
+    public static final int PREDEFINED_QUERY_DATA_TYPE_END = 167;
 
-    public static final int LEN = QUERY_DATA_TYPE_FIELD + 1;
+    public static final int LEN = PREDEFINED_QUERY_DATA_TYPE_END + 1;
 
     @Override
     public int getFactoryId() {

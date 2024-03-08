@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ public final class ToConverters {
         converters.put(QueryDataType.TIMESTAMP_WITH_TZ_CALENDAR, ToCalendarConverter.INSTANCE);
 
         converters.put(QueryDataType.OBJECT, new ToCanonicalConverter(QueryDataType.OBJECT));
+        converters.put(QueryDataType.MAP, new ToCanonicalConverter(QueryDataType.MAP));
         converters.put(QueryDataType.JSON, new ToCanonicalConverter(QueryDataType.JSON));
         converters.put(QueryDataType.ROW, new ToCanonicalConverter(QueryDataType.ROW));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.hazelcast.internal.metrics.DynamicMetricsProvider;
 import com.hazelcast.internal.metrics.MetricDescriptor;
 import com.hazelcast.internal.metrics.MetricsCollectionContext;
 import com.hazelcast.internal.monitor.impl.LocalReplicatedMapStatsImpl;
+import com.hazelcast.internal.namespace.NamespaceUtil;
 import com.hazelcast.internal.nio.ClassLoaderUtil;
 import com.hazelcast.internal.partition.InternalPartition;
 import com.hazelcast.internal.partition.MigrationAwareService;
@@ -47,6 +48,7 @@ import com.hazelcast.internal.util.ConstructorFunction;
 import com.hazelcast.internal.util.ContextMutexFactory;
 import com.hazelcast.replicatedmap.LocalReplicatedMapStats;
 import com.hazelcast.replicatedmap.ReplicatedMapCantBeCreatedOnLiteMemberException;
+import com.hazelcast.replicatedmap.impl.iterator.ReplicatedMapIterationService;
 import com.hazelcast.replicatedmap.impl.operation.CheckReplicaVersionOperation;
 import com.hazelcast.replicatedmap.impl.operation.ReplicationOperation;
 import com.hazelcast.replicatedmap.impl.record.ReplicatedRecordStore;
@@ -89,7 +91,6 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
                                              MigrationAwareService, SplitBrainHandlerService,
                                              StatisticsAwareService<LocalReplicatedMapStats>,
                                              SplitBrainProtectionAwareService, DynamicMetricsProvider {
-
     public static final String SERVICE_NAME = "hz:impl:replicatedMapService";
     public static final int INVOCATION_TRY_COUNT = 3;
 
@@ -120,6 +121,7 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
     private final SplitBrainProtectionService splitBrainProtectionService;
     private final ReplicatedMapEventPublishingService eventPublishingService;
     private final ReplicatedMapSplitBrainHandlerService splitBrainHandlerService;
+    private final ReplicatedMapIterationService iterationService;
     private final LocalReplicatedMapStatsProvider statsProvider;
     private final SplitBrainMergePolicyProvider mergePolicyProvider;
 
@@ -134,6 +136,7 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
         this.partitionContainers = new PartitionContainer[nodeEngine.getPartitionService().getPartitionCount()];
         this.eventPublishingService = new ReplicatedMapEventPublishingService(this);
         this.splitBrainHandlerService = new ReplicatedMapSplitBrainHandlerService(this);
+        this.iterationService = new ReplicatedMapIterationService(this, nodeEngine.getSerializationService(), nodeEngine);
         this.splitBrainProtectionService = nodeEngine.getSplitBrainProtectionService();
         this.mergePolicyProvider = nodeEngine.getSplitBrainMergePolicyProvider();
         this.statsProvider = new LocalReplicatedMapStatsProvider(config, partitionContainers);
@@ -173,6 +176,7 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
         if (antiEntropyFuture != null) {
             antiEntropyFuture.cancel(true);
         }
+        this.iterationService.shutdown();
     }
 
     /**
@@ -279,15 +283,16 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
     }
 
     public void initializeListeners(String name) {
-        List<ListenerConfig> listenerConfigs = getReplicatedMapConfig(name).getListenerConfigs();
+        ReplicatedMapConfig mapConfig = getReplicatedMapConfig(name);
+        List<ListenerConfig> listenerConfigs = mapConfig.getListenerConfigs();
         for (ListenerConfig listenerConfig : listenerConfigs) {
             EntryListener listener = null;
             if (listenerConfig.getImplementation() != null) {
                 listener = (EntryListener) listenerConfig.getImplementation();
             } else if (listenerConfig.getClassName() != null) {
                 try {
-                    listener = ClassLoaderUtil.newInstance(nodeEngine.getConfigClassLoader(),
-                            listenerConfig.getClassName());
+                    ClassLoader loader = NamespaceUtil.getClassLoaderForNamespace(nodeEngine, mapConfig.getUserCodeNamespace());
+                    listener = ClassLoaderUtil.newInstance(loader, listenerConfig.getClassName());
                 } catch (Exception e) {
                     throw rethrow(e);
                 }
@@ -311,6 +316,10 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
 
     public ReplicatedMapEventPublishingService getEventPublishingService() {
         return eventPublishingService;
+    }
+
+    public ReplicatedMapIterationService getIterationService() {
+        return iterationService;
     }
 
     @Override
@@ -385,6 +394,25 @@ public class ReplicatedMapService implements ManagedService, RemoteService, Even
     @Override
     public void provideDynamicMetrics(MetricDescriptor descriptor, MetricsCollectionContext context) {
         provide(descriptor, context, REPLICATED_MAP_PREFIX, getStats());
+    }
+
+    /**
+     * Looks up the User Code Namespace name associated with the specified replicated map name. This is done
+     * by checking the Node's config tree directly.
+     *
+     * @param engine  {@link NodeEngine} implementation of this member for service and config lookups
+     * @param mapName The name of the {@link com.hazelcast.replicatedmap.ReplicatedMap} to lookup for
+     * @return the Namespace Name if found, or {@code null} otherwise.
+     */
+    public static String lookupNamespace(NodeEngine engine, String mapName) {
+        if (engine.getNamespaceService().isEnabled()) {
+            // No regular containers available, fallback to config
+            ReplicatedMapConfig config = engine.getConfig().findReplicatedMapConfig(mapName);
+            if (config != null) {
+                return config.getUserCodeNamespace();
+            }
+        }
+        return null;
     }
 
     private class AntiEntropyTask implements Runnable {

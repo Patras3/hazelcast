@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,8 +114,7 @@ public final class TestContextSupport {
 
         @Override
         public void init(@Nonnull Context context) throws Exception {
-            if (context instanceof TestProcessorSupplierContext) {
-                TestProcessorSupplierContext c = (TestProcessorSupplierContext) context;
+            if (context instanceof TestProcessorSupplierContext c) {
                 NodeEngineImpl nodeEngine = Util.getNodeEngine(c.hazelcastInstance());
                 context = new ProcCtx(nodeEngine, c.jobId(), c.executionId(), c.jobConfig(),
                         c.logger(), c.vertexName(), 1, 1,

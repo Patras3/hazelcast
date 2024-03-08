@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -877,8 +877,8 @@ public abstract class SqlIndexAbstractTest extends SqlIndexTestSupport {
 
         for (IndexType indexType : Arrays.asList(IndexType.SORTED, IndexType.HASH)) {
             for (boolean composite : Arrays.asList(true, false)) {
-                for (ExpressionType<?> firstType : baseTypes()) {
-                    for (ExpressionType<?> secondType : baseTypes()) {
+                for (ExpressionType<?> firstType : quickTestTypes()) {
+                    for (ExpressionType<?> secondType : quickTestTypes()) {
                         res.add(new Object[]{indexType, composite, firstType, secondType});
                     }
                 }
@@ -896,8 +896,8 @@ public abstract class SqlIndexAbstractTest extends SqlIndexTestSupport {
 
         for (IndexType indexType : Arrays.asList(IndexType.SORTED, IndexType.HASH)) {
             for (boolean composite : Arrays.asList(true, false)) {
-                for (ExpressionType<?> firstType : nonBaseTypes()) {
-                    for (ExpressionType<?> secondType : nonBaseTypes()) {
+                for (ExpressionType<?> firstType : slowTestTypes()) {
+                    for (ExpressionType<?> secondType : slowTestTypes()) {
                         res.add(new Object[]{indexType, composite, firstType, secondType});
                     }
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.hazelcast.security.permission.LockPermission;
 import com.hazelcast.security.permission.ManagementPermission;
 import com.hazelcast.security.permission.MapPermission;
 import com.hazelcast.security.permission.MultiMapPermission;
+import com.hazelcast.security.permission.UserCodeNamespacePermission;
 import com.hazelcast.security.permission.PNCounterPermission;
 import com.hazelcast.security.permission.QueuePermission;
 import com.hazelcast.security.permission.ReliableTopicPermission;
@@ -220,7 +221,11 @@ public class PermissionConfig implements IdentifiedDataSerializable, Versioned {
         /**
          * CP Map permissions
          */
-        CPMAP("cpmap-permission", CPMapPermission.class);
+        CPMAP("cpmap-permission", CPMapPermission.class),
+        /**
+         * User Code Namespace permissions
+         */
+        USER_CODE_NAMESPACE("user-code-namespace-permission", UserCodeNamespacePermission.class);
 
         private final String nodeName;
         private final String className;

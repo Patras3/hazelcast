@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ import com.hazelcast.config.SplitBrainProtectionConfig;
 import com.hazelcast.config.SplitBrainProtectionListenerConfig;
 import com.hazelcast.config.TieredStoreConfig;
 import com.hazelcast.config.TopicConfig;
+import com.hazelcast.config.UserCodeNamespaceConfig;
 import com.hazelcast.config.WanBatchPublisherConfig;
 import com.hazelcast.config.WanConsumerConfig;
 import com.hazelcast.config.WanCustomPublisherConfig;
@@ -82,6 +83,7 @@ import com.hazelcast.config.WanReplicationRef;
 import com.hazelcast.config.WanSyncConfig;
 import com.hazelcast.internal.dynamicconfig.AddDynamicConfigOperation;
 import com.hazelcast.internal.dynamicconfig.DynamicConfigPreJoinOperation;
+import com.hazelcast.internal.namespace.impl.ResourceDefinitionImpl;
 import com.hazelcast.internal.serialization.DataSerializerHook;
 import com.hazelcast.internal.serialization.impl.ArrayDataSerializableFactory;
 import com.hazelcast.internal.serialization.impl.FactoryIdHelper;
@@ -171,8 +173,10 @@ public final class ConfigDataSerializerHook implements DataSerializerHook {
     public static final int BTREE_INDEX_CONFIG = 67;
     public static final int DATA_CONNECTION_CONFIG = 68;
     public static final int PARTITION_ATTRIBUTE_CONFIG = 69;
+    public static final int NAMESPACE_CONFIG = 70;
+    public static final int RESOURCE_DEFINITION = 71;
 
-    private static final int LEN = PARTITION_ATTRIBUTE_CONFIG + 1;
+    private static final int LEN = RESOURCE_DEFINITION + 1;
 
     @Override
     public int getFactoryId() {
@@ -252,6 +256,8 @@ public final class ConfigDataSerializerHook implements DataSerializerHook {
         constructors[BTREE_INDEX_CONFIG] = BTreeIndexConfig::new;
         constructors[DATA_CONNECTION_CONFIG] = DataConnectionConfig::new;
         constructors[PARTITION_ATTRIBUTE_CONFIG] = PartitioningAttributeConfig::new;
+        constructors[NAMESPACE_CONFIG] = UserCodeNamespaceConfig::new;
+        constructors[RESOURCE_DEFINITION] = ResourceDefinitionImpl::new;
 
         return new ArrayDataSerializableFactory(constructors);
     }

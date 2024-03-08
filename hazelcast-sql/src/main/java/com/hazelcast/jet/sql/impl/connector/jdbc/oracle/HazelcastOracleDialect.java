@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,10 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.Locale;
 
 /**
@@ -62,13 +66,12 @@ public class HazelcastOracleDialect extends OracleSqlDialect implements TypeReso
 
     @Override
     public QueryDataType resolveType(String columnTypeName, int precision, int scale) {
-        switch (columnTypeName.toUpperCase(Locale.ROOT)) {
-            case "NUMBER":
-                return resolveNumber(precision, scale);
-
-            default:
-                return DefaultTypeResolver.resolveType(columnTypeName, precision, scale);
-        }
+        return switch (columnTypeName.toUpperCase(Locale.ROOT)) {
+            case "NUMBER" -> resolveNumber(precision, scale);
+            case "BINARY_FLOAT" -> QueryDataType.REAL;
+            case "BINARY_DOUBLE" -> QueryDataType.DOUBLE;
+            default -> DefaultTypeResolver.resolveType(columnTypeName, precision, scale);
+        };
     }
 
     private static QueryDataType resolveNumber(int precision, int scale) {
@@ -89,4 +92,15 @@ public class HazelcastOracleDialect extends OracleSqlDialect implements TypeReso
         }
         return QueryDataType.DECIMAL;
     }
+
+    @Override
+    public void setObject(PreparedStatement ps, Object obj, int j) throws SQLException {
+        if (obj instanceof LocalDate localDate) {
+            Date date = Date.valueOf(localDate);
+            ps.setDate(j + 1, date);
+        } else {
+            TypeResolver.super.setObject(ps, obj, j);
+        }
+    }
+
 }

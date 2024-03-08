@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ public class InternalPartitionServiceImpl implements InternalPartitionService,
         migrationManager = new MigrationManager(node, this, partitionServiceLock);
         replicaManager = new PartitionReplicaManager(node, this);
 
-        partitionReplicaStateChecker = new PartitionReplicaStateChecker(node, this);
+        partitionReplicaStateChecker = new PartitionReplicaStateChecker(node.getNodeEngine(), this);
         partitionEventManager = new PartitionEventManager(node);
 
         masterTrigger = new CoalescingDelayedTrigger(nodeEngine.getExecutionService(), TRIGGER_MASTER_DELAY_MILLIS,
@@ -1259,6 +1259,7 @@ public class InternalPartitionServiceImpl implements InternalPartitionService,
 
     @Override
     public void dispatchEvent(PartitionEvent event, PartitionEventListener<PartitionEvent> partitionEventListener) {
+        // Internal event not used for UCD, no Namespace awareness needed
         partitionEventListener.onEvent(event);
     }
 
@@ -1325,7 +1326,8 @@ public class InternalPartitionServiceImpl implements InternalPartitionService,
         return partitionEventManager;
     }
 
-    boolean isFetchMostRecentPartitionTableTaskRequired() {
+    @Override
+    public boolean isFetchMostRecentPartitionTableTaskRequired() {
         return shouldFetchPartitionTables;
     }
 

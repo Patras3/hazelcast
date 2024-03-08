@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,6 @@ import com.hazelcast.sql.impl.ResultLimitReachedException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
@@ -146,13 +144,6 @@ public final class ExceptionUtil {
         throw peeledAndUnchecked(t);
     }
 
-    @Nonnull
-    public static String stackTraceToString(Throwable t) {
-        StringWriter sw = new StringWriter();
-        t.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
-    }
-
     /**
      * If the given exception has "java.lang.ClassCastException: cannot assign
      * instance of java.lang.invoke.SerializedLambda" in the causes, wrap it in
@@ -194,6 +185,7 @@ public final class ExceptionUtil {
         return peeledFailure instanceof JobTerminateRequestedException
                 || peeledFailure instanceof ResultLimitReachedException
                 || peeledFailure instanceof TerminatedWithSnapshotException
+                || peeledFailure instanceof CancellationByUserException
                 || checkCause(peeledFailure);
     }
 

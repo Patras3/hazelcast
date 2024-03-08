@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class AllTypesSelectJdbcSqlConnectorTest extends JdbcSqlTestSupport {
     public static Collection<Object[]> parameters() {
         return asList(new Object[][]{
                 {"VARCHAR(100)", "VARCHAR", "'dummy'", "dummy"},
+                {"CHAR(3)", "VARCHAR", "'try'", "try"},
                 {"BOOLEAN", "BOOLEAN", "TRUE", true},
                 {"TINYINT", "TINYINT", "1", (byte) 1},
                 {"SMALLINT", "SMALLINT", "2", (short) 2},
@@ -100,7 +101,7 @@ public class AllTypesSelectJdbcSqlConnectorTest extends JdbcSqlTestSupport {
 
         assertRowsAnyOrder("SELECT * FROM " + mappingName, new Row(expected));
 
-        assertRowsAnyOrder("SELECT * FROM " + mappingName + " WHERE table_column = ?",
+        assertRowsAnyOrder("SELECT table_column FROM " + mappingName + " WHERE table_column = ?",
                 newArrayList(expected),
                 new Row(expected)
         );

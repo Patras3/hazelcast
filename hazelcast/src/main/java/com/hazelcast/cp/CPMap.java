@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,15 @@ public interface CPMap<K, V> extends DistributedObject {
      * @throws NullPointerException when {@code key} or {@code value} is null
      */
     V put(@Nonnull K key, @Nonnull V value);
+
+    /**
+     * Associates {@code key} with {@code value} only if {@code key} is not present.
+     * @param key non-null key of the entry
+     * @param value non-null value of the entry
+     * @return null if {@code key} had no previous mapping, otherwise the value associated with {@code key}
+     * @throws NullPointerException when {@code key} or {@code value} is null
+     */
+    V putIfAbsent(@Nonnull K key, @Nonnull V value);
 
     /**
      * Associates {@code key} with {@code value}.

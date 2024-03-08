@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -784,6 +784,10 @@ public abstract class SqlTestSupport extends SimpleTestInClusterSupport {
 
     protected static Object[] row(Object... values) {
         return values;
+    }
+
+    protected static Object[][] rows(Object[]... rows) {
+        return rows;
     }
 
     /**

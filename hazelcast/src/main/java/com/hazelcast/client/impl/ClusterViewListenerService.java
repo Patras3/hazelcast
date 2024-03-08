@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,11 +142,35 @@ public class ClusterViewListenerService {
         }
     }
 
-    private ClientMessage getPartitionViewMessageOrNull() {
+    public MembersView getMembersView() {
+        MembershipManager membershipManager = ((ClusterServiceImpl) nodeEngine.getClusterService()).getMembershipManager();
+        MembersView membersView = membershipManager.getMembersView();
+
+        int version = membersView.getVersion();
+        List<MemberInfo> members = membersView.getMembers();
+
+        ArrayList<MemberInfo> memberInfos = new ArrayList<>();
+        for (MemberInfo member : members) {
+            Address address = clientAddressOf(member.getAddress());
+            // Ignore any member without a CLIENT endpoint qualifier configured
+            if (address == null) {
+                continue;
+            }
+            memberInfos.add(new MemberInfo(address, member.getUuid(), member.getAttributes(),
+                    member.isLiteMember(), member.getVersion(), member.getAddressMap()));
+        }
+
+        return new MembersView(version, memberInfos);
+    }
+
+    public record PartitionsView(Map<UUID, List<Integer>> partitions, int version) {
+    }
+
+    public PartitionsView getPartitionsViewOrNull() {
         InternalPartitionService partitionService = (InternalPartitionService) nodeEngine.getPartitionService();
         PartitionTableView partitionTableView = partitionService.createPartitionTableView();
         Map<UUID, List<Integer>> partitions = getPartitions(partitionTableView);
-        if (partitions.size() == 0) {
+        if (partitions.isEmpty()) {
             return null;
         }
 
@@ -158,22 +182,23 @@ public class ClusterViewListenerService {
         }
         version = partitionTableVersion.get();
 
-        return ClientAddClusterViewListenerCodec.encodePartitionsViewEvent(version, partitions.entrySet());
+        return new PartitionsView(partitions, version);
+    }
+
+    private ClientMessage getPartitionViewMessageOrNull() {
+        PartitionsView partitionsView = getPartitionsViewOrNull();
+        if (partitionsView == null) {
+            return null;
+        }
+
+        return ClientAddClusterViewListenerCodec.encodePartitionsViewEvent(partitionsView.version(),
+                partitionsView.partitions().entrySet());
     }
 
     private ClientMessage getMemberListViewMessage() {
-        MembershipManager membershipManager = ((ClusterServiceImpl) nodeEngine.getClusterService()).getMembershipManager();
-        MembersView membersView = membershipManager.getMembersView();
-
-        int version = membersView.getVersion();
-        List<MemberInfo> members = membersView.getMembers();
-
-        ArrayList<MemberInfo> memberInfos = new ArrayList<>();
-        for (MemberInfo member : members) {
-            memberInfos.add(new MemberInfo(clientAddressOf(member.getAddress()), member.getUuid(), member.getAttributes(),
-                    member.isLiteMember(), member.getVersion(), member.getAddressMap()));
-        }
-        return ClientAddClusterViewListenerCodec.encodeMembersViewEvent(version, memberInfos);
+        MembersView processedMembersView = getMembersView();
+        return ClientAddClusterViewListenerCodec.encodeMembersViewEvent(
+                processedMembersView.getVersion(), processedMembersView.getMembers());
     }
 
     public void deregisterListener(ClientEndpoint clientEndpoint) {

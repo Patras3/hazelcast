@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,18 +150,20 @@ public abstract class JetTestSupport extends HazelcastTestSupport {
                     ditchJob(job, instances.toArray(new HazelcastInstance[0]));
                 }
 
-                JobClassLoaderService jobClassLoaderService = ((HazelcastInstanceImpl) instance).node
-                        .getNodeEngine()
-                        .<JetServiceBackend>getService(SERVICE_NAME)
-                        .getJobClassLoaderService();
+                if (instance instanceof HazelcastInstanceImpl hazelcastInstanceImpl) {
+                    JobClassLoaderService jobClassLoaderService = hazelcastInstanceImpl.node
+                            .getNodeEngine()
+                            .<JetServiceBackend>getService(SERVICE_NAME)
+                            .getJobClassLoaderService();
 
-                Map<Long, ?> classLoaders = jobClassLoaderService.getClassLoaders();
-                // The classloader cleanup is done asynchronously in some cases, wait up to 10s
-                for (int i = 0; i < 100 && !classLoaders.isEmpty(); i++) {
-                    sleepMillis(100);
-                }
-                for (Entry<Long, ?> entry : classLoaders.entrySet()) {
-                    leakedClassloaders.put(entry.getKey(), entry.toString());
+                    Map<Long, ?> classLoaders = jobClassLoaderService.getClassLoaders();
+                    // The classloader cleanup is done asynchronously in some cases, wait up to 10s
+                    for (int i = 0; i < 100 && !classLoaders.isEmpty(); i++) {
+                        sleepMillis(100);
+                    }
+                    for (Entry<Long, ?> entry : classLoaders.entrySet()) {
+                        leakedClassloaders.put(entry.getKey(), entry.toString());
+                    }
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,11 +133,11 @@ public class GenericMapLoader<K, V> implements MapLoader<K, V>, MapLoaderLifecyc
 
     protected SqlService sqlService;
 
-    protected GenericMapStoreProperties genericMapStoreProperties;
-
-    protected Queries queries;
-
     protected List<SqlColumnMetadata> columnMetadataList;
+
+    GenericMapStoreProperties genericMapStoreProperties;
+
+    Queries queries;
 
     private ILogger logger;
 
@@ -226,10 +226,7 @@ public class GenericMapLoader<K, V> implements MapLoader<K, V>, MapLoaderLifecyc
                     genericMapStoreProperties.idColumn
             );
 
-            if (!genericMapStoreProperties.hasColumns()) {
-                columnMetadataList = mappingHelper.loadColumnMetadataFromMapping(mappingName);
-            }
-            queries = new Queries(mappingName, genericMapStoreProperties.idColumn, columnMetadataList);
+            readExistingMapping();
         } catch (Exception e) {
             // We create the mapping on the first member initializing this object
             // Other members trying to concurrently initialize will fail and just read the mapping
@@ -255,11 +252,12 @@ public class GenericMapLoader<K, V> implements MapLoader<K, V>, MapLoaderLifecyc
                 genericMapStoreProperties.idColumn
         );
 
-        columnMetadataList = mappingHelper.loadColumnMetadataFromMapping(tempMapping);
-        Map<String, SqlColumnMetadata> columnMap = columnMetadataList
+        List<SqlColumnMetadata> allColumnsMetadataList = mappingHelper.loadColumnMetadataFromMapping(tempMapping);
+        dropMapping(tempMapping);
+
+        Map<String, SqlColumnMetadata> columnMap = allColumnsMetadataList
                 .stream()
                 .collect(toMap(SqlColumnMetadata::getName, identity()));
-        dropMapping(tempMapping);
 
         return genericMapStoreProperties.getAllColumns().stream()
                                         .map(columnName -> validateColumn(columnMap, columnName))
@@ -270,12 +268,18 @@ public class GenericMapLoader<K, V> implements MapLoader<K, V>, MapLoaderLifecyc
         logger.fine("Reading existing mapping for map " + mapName);
         try {
             // If mappingName does not exist, we get "... did you forget to CREATE MAPPING?" exception
-            columnMetadataList = mappingHelper.loadColumnMetadataFromMapping(mappingName);
-            Map<String, SqlColumnMetadata> columnMap = columnMetadataList
+            List<SqlColumnMetadata> columnMetadata = mappingHelper.loadColumnMetadataFromMapping(mappingName);
+            if (genericMapStoreProperties.hasColumns()) {
+                columnMetadata.removeIf(c -> !genericMapStoreProperties.columns.contains(c.getName())
+                        && !genericMapStoreProperties.idColumn.contains(c.getName()));
+            }
+            Map<String, SqlColumnMetadata> columnMap = columnMetadata
                     .stream()
                     .collect(toMap(SqlColumnMetadata::getName, identity()));
             validateColumnsExist(columnMap, genericMapStoreProperties.getAllColumns());
-            queries = new Queries(mappingName, genericMapStoreProperties.idColumn, columnMetadataList);
+
+            columnMetadataList = columnMetadata;
+            queries = new Queries(mappingName, genericMapStoreProperties.idColumn, columnMetadata);
 
         } catch (Exception e) {
             initFailure = e;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.hazelcast.config.cp.CPSubsystemConfig;
 import com.hazelcast.config.cp.FencedLockConfig;
 import com.hazelcast.config.cp.RaftAlgorithmConfig;
 import com.hazelcast.config.cp.SemaphoreConfig;
+import com.hazelcast.config.security.AccessControlServiceConfig;
 import com.hazelcast.config.security.JaasAuthenticationConfig;
 import com.hazelcast.config.security.KerberosAuthenticationConfig;
 import com.hazelcast.config.security.KerberosIdentityConfig;
@@ -145,7 +146,8 @@ public class ConfigCompatibilityChecker {
                 new DataConnectionConfigChecker());
         checkCompatibleConfigs("tpc", c1, c2, singletonMap("", c1.getTpcConfig()),
                 singletonMap("", c2.getTpcConfig()), new TpcConfigChecker());
-
+        checkCompatibleConfigs("user-code-namespaces", c1, c2, singletonMap("", c1.getNamespacesConfig()),
+                singletonMap("", c2.getNamespacesConfig()), new UserCodeNamespacesConfigChecker());
         return true;
     }
 
@@ -720,6 +722,13 @@ public class ConfigCompatibilityChecker {
         }
     }
 
+    private static class UserCodeNamespacesConfigChecker extends ConfigChecker<UserCodeNamespacesConfig> {
+        @Override
+        boolean check(UserCodeNamespacesConfig c1, UserCodeNamespacesConfig c2) {
+            return nullSafeEqual(c1, c2);
+        }
+    }
+
 
     public static class CPSubsystemConfigChecker extends ConfigChecker<CPSubsystemConfig> {
 
@@ -890,7 +899,8 @@ public class ConfigCompatibilityChecker {
             }
 
             return c1.getStatementTimeoutMillis() == c2.getStatementTimeoutMillis()
-                    && c1.isCatalogPersistenceEnabled() == c2.isCatalogPersistenceEnabled();
+                    && c1.isCatalogPersistenceEnabled() == c2.isCatalogPersistenceEnabled()
+                    && nullSafeEqual(c1.getJavaReflectionFilterConfig(), c2.getJavaReflectionFilterConfig());
         }
 
         @Override
@@ -1748,7 +1758,15 @@ public class ConfigCompatibilityChecker {
                     && isCompatible(c1.getUsernamePasswordIdentityConfig(), c2.getUsernamePasswordIdentityConfig())
                     && isCompatible(c1.getTokenIdentityConfig(), c2.getTokenIdentityConfig())
                     && isCompatible(c1.getKerberosIdentityConfig(), c2.getKerberosIdentityConfig())
+                    && isCompatible(c1.getAccessControlServiceConfig(), c2.getAccessControlServiceConfig())
                     ;
+        }
+
+        private static boolean isCompatible(AccessControlServiceConfig c1,
+                AccessControlServiceConfig c2) {
+            return c1 == c2 || (c1 != null && c2 != null
+                    && nullSafeEqual(c1.getFactoryClassName(), c2.getFactoryClassName())
+                    && nullSafeEqual(c1.getProperties(), c2.getProperties()));
         }
 
         private static boolean isCompatible(UsernamePasswordIdentityConfig c1, UsernamePasswordIdentityConfig c2) {

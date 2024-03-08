@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public interface SqlConnector {
     String OPTION_KEY_COMPACT_TYPE_NAME = "keyCompactTypeName";
 
     /**
-     * The value Compact type name, if {@value #OPTION_KEY_FORMAT} is {@value
+     * The value Compact type name, if {@value #OPTION_VALUE_FORMAT} is {@value
      * COMPACT_FORMAT}.
      */
     String OPTION_VALUE_COMPACT_TYPE_NAME = "valueCompactTypeName";
@@ -179,6 +179,11 @@ public interface SqlConnector {
     String OPTION_TYPE_PORTABLE_CLASS_VERSION = "portableClassVersion";
 
     String OPTION_TYPE_AVRO_SCHEMA = "avroSchema";
+
+    /**
+     * The preferred local parallelism for connectors that support configuring it.
+     */
+    String OPTION_PREFERRED_LOCAL_PARALLELISM = "preferredLocalParallelism";
 
     /**
      * Value for {@value #OPTION_KEY_FORMAT} and {@value #OPTION_VALUE_FORMAT}

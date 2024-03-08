@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 package com.hazelcast.mapstore.postgres;
 
-import com.hazelcast.mapstore.GenericMapStoreTest;
+import com.hazelcast.mapstore.GenericMapStoreBasicIT;
 import com.hazelcast.test.annotation.NightlyTest;
 import com.hazelcast.test.jdbc.PostgresDatabaseProvider;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 
 @Category(NightlyTest.class)
-public class PostgresGenericMapStoreSimpleIT extends GenericMapStoreTest {
+public class PostgresGenericMapStoreSimpleIT extends GenericMapStoreBasicIT {
 
     @BeforeClass
     public static void beforeClass()  {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package com.hazelcast.commandline;
 
 import com.hazelcast.jet.function.RunnableEx;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junitpioneer.jupiter.SetSystemProperty;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import picocli.CommandLine;
@@ -34,6 +36,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@Tag("com.hazelcast.test.annotation.ParallelJVMTest")
 class HazelcastServerCommandLineTest {
     private HazelcastServerCommandLine hazelcastServerCommandLine;
 
@@ -47,9 +50,9 @@ class HazelcastServerCommandLineTest {
 
     @Test
     void test_start() {
-        //when
+        // when
         hazelcastServerCommandLine.start(null, null, null);
-        //then
+        // then
         verify(start, times(1)).run();
     }
 
@@ -84,29 +87,19 @@ class HazelcastServerCommandLineTest {
     }
 
     @Test
-    void test_log4j2_exception() {
-        PrintStream standardErr = System.err;
-        try {
-            ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
-            PrintStream errorPrintStream = new PrintStream(outputStreamCaptor);
-            System.setErr(errorPrintStream);
-
-            System.setProperty("hazelcast.logging.type", "log4j2");
-            System.setProperty("log4j2.configurationFile", "faulty-log.properties");
-
+    @SetSystemProperty(key = "hazelcast.logging.type", value = "log4j2")
+    @SetSystemProperty(key = "log4j2.configurationFile", value = "faulty-log.properties")
+    void test_log4j2_exception() throws Exception {
+        try (ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
+             PrintStream errorPrintStream = new PrintStream(outputStreamCaptor)) {
             CommandLine cmd = new CommandLine(new HazelcastServerCommandLine())
-                    .setOut(createPrintWriter(System.out))
-                    .setErr(createPrintWriter(errorPrintStream))
-                    .setTrimQuotes(true)
-                    .setExecutionExceptionHandler(new ExceptionHandler());
+                    .setOut(createPrintWriter(System.out)).setErr(createPrintWriter(errorPrintStream))
+                    .setTrimQuotes(true).setExecutionExceptionHandler(new ExceptionHandler());
             cmd.execute("start");
 
             String string = outputStreamCaptor.toString(StandardCharsets.UTF_8);
-            assertThat(string)
-                    .contains("org.apache.logging.log4j.core.config.ConfigurationException: "
-                              + "No type attribute provided for Layout on Appender STDOUT");
-        } finally {
-            System.setOut(standardErr);
+            assertThat(string).contains("org.apache.logging.log4j.core.config.ConfigurationException: "
+                    + "No type attribute provided for Layout on Appender STDOUT");
         }
     }
 }

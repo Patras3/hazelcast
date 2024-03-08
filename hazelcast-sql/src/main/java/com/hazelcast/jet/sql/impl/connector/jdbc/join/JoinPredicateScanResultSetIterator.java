@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package com.hazelcast.jet.sql.impl.connector.jdbc.join;
 import com.hazelcast.internal.nio.IOUtil;
 import com.hazelcast.internal.util.ExceptionUtil;
 import com.hazelcast.internal.util.iterator.AutoCloseableIterator;
-import com.hazelcast.logging.ILogger;
-import com.hazelcast.logging.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,7 +33,6 @@ import java.util.function.Function;
  * The rowMapper has the SQL Join logic. As long as it returns an item, we can traverse this iterator
  */
 public class JoinPredicateScanResultSetIterator<T> implements AutoCloseableIterator<T> {
-    private static final ILogger LOGGER = Logger.getLogger(JoinPredicateScanResultSetIterator.class);
     private final Connection connection;
     private final String sql;
     private final Function<ResultSet, T> rowMapper;

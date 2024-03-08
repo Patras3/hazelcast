@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import com.hazelcast.client.impl.protocol.task.schema.SendAllSchemasMessageTask;
 import com.hazelcast.client.impl.protocol.task.schema.SendSchemaMessageTask;
 import com.hazelcast.cp.internal.client.AddCPGroupAvailabilityListenerMessageTask;
 import com.hazelcast.cp.internal.client.AddCPMembershipListenerMessageTask;
+import com.hazelcast.cp.internal.client.CPSubsystemGetCPGroupIdsMessageTask;
+import com.hazelcast.cp.internal.client.CPSubsystemGetCPObjectInfosMessageTask;
 import com.hazelcast.cp.internal.client.RemoveCPGroupAvailabilityListenerMessageTask;
 import com.hazelcast.cp.internal.client.RemoveCPMembershipListenerMessageTask;
 import com.hazelcast.cp.internal.datastructures.spi.client.CreateRaftGroupMessageTask;
@@ -94,6 +96,8 @@ public class MessageTaskSecurityTest {
         skip(CacheFetchNearCacheInvalidationMetadataTask.class, "Internal task used by RepairingTask");
         skip(ClientStatisticsMessageTask.class, "Client statistics collection task");
         skip(GetDistributedObjectsMessageTask.class, "Gets proxies");
+        skip(CPSubsystemGetCPGroupIdsMessageTask.class, "Gets names of CP objects");
+        skip(CPSubsystemGetCPObjectInfosMessageTask.class, "Gets names of CP objects");
         skip(MapAddListenerMessageTask.class, "Permissions checked by subsequent MapPublisherCreate* tasks");
         skip(MapFetchNearCacheInvalidationMetadataTask.class, "Internal task used by RepairingTask");
         skip(MapMadePublishableMessageTask.class, "Internal task used by RepairingTask");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,9 +240,10 @@ public class IndexRegistry {
         });
     }
 
-    public void getStepAwareStorages(Consumer<Step> stepCollector) {
+    public void getCustomStepAwareStorage(Consumer<Step> stepCollector) {
         for (int i = 0; i < indexes.length; i++) {
-            indexes[i].getStepAwareStorage().addAsHeadStep(stepCollector);
+            indexes[i].getCustomStepAwareStorage()
+                    .collectCustomSteps(stepCollector);
         }
     }
 

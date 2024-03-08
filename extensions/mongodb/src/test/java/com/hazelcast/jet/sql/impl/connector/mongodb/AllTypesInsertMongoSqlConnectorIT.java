@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,11 @@ public class AllTypesInsertMongoSqlConnectorIT extends MongoSqlIT {
                 {16, "object", "JSON", "JSON_OBJECT('test':'abc')", new HazelcastJsonValue("{\"test\": \"abc\"}"),
                         new Document("test", "abc"), new HazelcastJsonValue("{\"test\": \"abc\"}") }
         });
+    }
+
+    @Override
+    public void supportAfter() {
+        // ignore cleanup, we want this test to run in parallel and it only creates a few mappings
     }
 
     @Test

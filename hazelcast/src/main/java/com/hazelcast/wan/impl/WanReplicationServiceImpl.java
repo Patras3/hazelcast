@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,6 +233,11 @@ public class WanReplicationServiceImpl implements WanReplicationService,
     public UUID syncAllMaps(String wanReplicationName, String wanPublisherId) {
         node.getManagementCenterService().log(
                 WanSyncIgnoredEvent.enterpriseOnly(wanReplicationName, wanPublisherId, null));
+        throw new UnsupportedOperationException("WAN sync is not supported.");
+    }
+
+    @Override
+    public WanSyncStateResult getSyncResult(UUID syncUUID) {
         throw new UnsupportedOperationException("WAN sync is not supported.");
     }
 

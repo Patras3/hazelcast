@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,6 @@ import com.hazelcast.partition.PartitioningStrategy;
 import com.hazelcast.query.impl.DefaultIndexProvider;
 import com.hazelcast.query.impl.IndexCopyBehavior;
 import com.hazelcast.query.impl.IndexProvider;
-import com.hazelcast.query.impl.IndexRegistry;
 import com.hazelcast.query.impl.getters.Extractors;
 import com.hazelcast.query.impl.predicates.QueryOptimizer;
 import com.hazelcast.spi.impl.NodeEngine;
@@ -124,6 +123,7 @@ class MapServiceContextImpl implements MapServiceContext {
     private static final long DESTROY_TIMEOUT_SECONDS = 30;
 
     protected final ILogger logger;
+
     private final NodeEngine nodeEngine;
     private final QueryEngine queryEngine;
     private final EventService eventService;
@@ -222,7 +222,7 @@ class MapServiceContextImpl implements MapServiceContext {
     // this method is overridden in another context
     MapContainer createMapContainer(String mapName) {
         MapServiceContext mapServiceContext = getService().getMapServiceContext();
-        return new MapContainer(mapName, nodeEngine.getConfig(), mapServiceContext);
+        return new MapContainerImpl(mapName, nodeEngine.getConfig(), mapServiceContext);
     }
 
     // this method is overridden in another context
@@ -333,7 +333,7 @@ class MapServiceContextImpl implements MapServiceContext {
     }
 
     protected PartitionContainer createPartitionContainer(MapService service, int partitionId) {
-        return new PartitionContainer(service, partitionId);
+        return new PartitionContainerImpl(service, partitionId);
     }
 
     /**
@@ -460,24 +460,15 @@ class MapServiceContextImpl implements MapServiceContext {
             mapStoreWrapper.destroy();
         }
 
+        // if there are any dynamic indexes, remove them
+        removeMapIndexConfigs(mapName);
+
         // Statistics are destroyed after container to prevent their leak.
         destroyPartitionsAndMapContainer(mapContainer);
-        // final step of node wide map destroy
-        afterMapContainerDestroyed(mapContainer);
     }
 
-    // thought as a final step after per partition destroy logic executed.
-    protected void afterMapContainerDestroyed(MapContainer mapContainer) {
-        if (mapContainer.shouldUseGlobalIndex()) {
-            destroyGlobalIndexes(mapContainer);
-        }
-
-        localMapStatsProvider.destroyLocalMapStatsImpl(mapContainer.getName());
-    }
-
-    protected void destroyGlobalIndexes(MapContainer mapContainer) {
-        IndexRegistry indexRegistry = mapContainer.getGlobalIndexRegistry();
-        indexRegistry.destroyIndexes();
+    protected void removeMapIndexConfigs(String mapName) {
+        // no-op in OS
     }
 
     /**
@@ -510,6 +501,8 @@ class MapServiceContextImpl implements MapServiceContext {
                 nodeEngine.getLogger(getClass()).warning(e);
             }
         }
+
+        mapContainer.onDestroy();
     }
 
     @Override

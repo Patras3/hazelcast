@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.hazelcast.internal.metrics.MetricDescriptor;
 import com.hazelcast.internal.metrics.MetricsCollectionContext;
 import com.hazelcast.internal.monitor.LocalCacheStats;
 import com.hazelcast.internal.monitor.impl.LocalCacheStatsImpl;
+import com.hazelcast.internal.namespace.NamespaceUtil;
 import com.hazelcast.internal.nio.IOUtil;
 import com.hazelcast.internal.partition.IPartitionLostEvent;
 import com.hazelcast.internal.partition.MigrationEndpoint;
@@ -57,7 +58,6 @@ import com.hazelcast.internal.util.MapUtil;
 import com.hazelcast.logging.ILogger;
 import com.hazelcast.spi.impl.InternalCompletableFuture;
 import com.hazelcast.spi.impl.NodeEngine;
-import com.hazelcast.spi.impl.NodeEngineImpl;
 import com.hazelcast.spi.impl.eventservice.EventFilter;
 import com.hazelcast.spi.impl.eventservice.EventRegistration;
 import com.hazelcast.spi.impl.eventservice.EventService;
@@ -185,7 +185,7 @@ public abstract class AbstractCacheService implements ICacheService,
 
     protected void postInit(NodeEngine nodeEngine, Properties properties, boolean metricsEnabled) {
         if (metricsEnabled) {
-            ((NodeEngineImpl) nodeEngine).getMetricsRegistry().registerDynamicMetricsProvider(this);
+            nodeEngine.getMetricsRegistry().registerDynamicMetricsProvider(this);
         }
     }
 
@@ -529,6 +529,17 @@ public abstract class AbstractCacheService implements ICacheService,
         }
     }
 
+    public Object toObject(Object data, String namespace) {
+        if (data == null) {
+            return null;
+        }
+        if (data instanceof Data) {
+            return NamespaceUtil.callWithNamespace(nodeEngine, namespace, () -> nodeEngine.toObject(data));
+        } else {
+            return data;
+        }
+    }
+
     public Data toData(Object object) {
         if (object == null) {
             return null;
@@ -557,6 +568,7 @@ public abstract class AbstractCacheService implements ICacheService,
 
     @Override
     public void dispatchEvent(Object event, CacheEventListener listener) {
+        // Internal event not used for UCD, no Namespace awareness needed
         listener.handleEvent(event);
     }
 

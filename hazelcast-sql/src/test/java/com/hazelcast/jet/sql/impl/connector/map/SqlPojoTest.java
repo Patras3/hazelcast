@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.hazelcast.jet.sql.impl.connector.map;
 
-import com.google.common.collect.ImmutableMap;
 import com.hazelcast.jet.sql.SqlTestSupport;
 import com.hazelcast.jet.sql.impl.connector.map.model.AllTypesValue;
 import com.hazelcast.jet.sql.impl.connector.map.model.InsuredPerson;
@@ -346,7 +345,7 @@ public class SqlPojoTest extends SqlTestSupport {
                         OffsetDateTime.ofInstant(ofEpochMilli(1586953414200L), systemDefault()),
                         OffsetDateTime.of(2020, 4, 15, 12, 23, 34, 200_000_000, UTC),
                         OffsetDateTime.of(2020, 4, 15, 12, 23, 34, 200_000_000, UTC),
-                        ImmutableMap.of(42, 43),
+                        Map.of(42, 43),
                         null
                 )));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.hazelcast.jet.kafka.TopicsConfig.TopicConfig;
 import com.hazelcast.jet.pipeline.DataConnectionRef;
 import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sinks;
-import com.hazelcast.test.annotation.ParallelJVMTest;
 import com.hazelcast.test.annotation.QuickTest;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -67,6 +66,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -98,7 +98,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@Category({QuickTest.class, ParallelJVMTest.class})
+@Category(QuickTest.class)
 public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
     private static final int INITIAL_PARTITION_COUNT = 4;
@@ -169,22 +169,26 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     }
 
     @Test
-    public void when_processingGuaranteeAtLeastOnce_then_readFromPartitionsInitialOffsets() {
-        testWithPartitionsInitialOffsets(AT_LEAST_ONCE, 80, 90);
+    public void when_processingGuaranteeAtLeastOnce_then_readFromPartitionsInitialOffsets() throws Exception {
+        testWithPartitionsInitialOffsets(AT_LEAST_ONCE);
     }
 
     @Test
-    public void when_processingGuaranteeExactlyOnce_then_readFromPartitionsInitialOffsets() {
-        testWithPartitionsInitialOffsets(EXACTLY_ONCE, 80, 90);
+    public void when_processingGuaranteeExactlyOnce_then_readFromPartitionsInitialOffsets() throws Exception {
+        testWithPartitionsInitialOffsets(EXACTLY_ONCE);
     }
 
-    private void testWithPartitionsInitialOffsets(
-            ProcessingGuarantee guarantee, int expectedRecordsReadFromTopic1, int expectedRecordsReadFromTopic2
-    ) {
+    private void testWithPartitionsInitialOffsets(ProcessingGuarantee guarantee) throws Exception {
+        int expectedRecordsReadFromTopic1 = 80;
+        int expectedRecordsReadFromTopic2 = 90;
         String sinkListName = randomName();
+        List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            kafkaTestSupport.produce(topic1Name, i, String.valueOf(i));
-            kafkaTestSupport.produce(topic2Name, i, String.valueOf(i));
+            futures.add(kafkaTestSupport.produce(topic1Name, i, String.valueOf(i)));
+            futures.add(kafkaTestSupport.produce(topic2Name, i, String.valueOf(i)));
+        }
+        for (Future<?> future : futures) {
+            future.get();
         }
         sleepAtLeastSeconds(3);
 
@@ -216,7 +220,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
         // group retrieved records by topic and check if expected number of records were skipped
         Map<String, List<String>> recordsByTopic = list.stream()
-                .collect(groupingBy(Tuple2::f1, mapping(Tuple2::f0, toList())));
+                .collect(groupingBy(Tuple2::requiredF1, mapping(Tuple2::f0, toList())));
 
         assertThat(recordsByTopic.get(topic1Name).size())
                 .isEqualTo(expectedRecordsReadFromTopic1);
@@ -329,8 +333,8 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         Job job = instances[0].getJet().newJob(p, config);
         sleepSeconds(3);
         for (int i = 0; i < messageCount; i++) {
-            kafkaTestSupport.produce(topic1Name, i, Integer.toString(i));
-            kafkaTestSupport.produce(topic2Name, i - messageCount, Integer.toString(i - messageCount));
+            kafkaTestSupport.produceSync(topic1Name, i, Integer.toString(i));
+            kafkaTestSupport.produceSync(topic2Name, i - messageCount, Integer.toString(i - messageCount));
         }
         IList<Object> list = instances[0].getList(sinkListName);
 
@@ -362,8 +366,8 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
             Thread.sleep(500);
 
             for (int i = messageCount; i < 2 * messageCount; i++) {
-                kafkaTestSupport.produce(topic1Name, i, Integer.toString(i));
-                kafkaTestSupport.produce(topic2Name, i - messageCount, Integer.toString(i - messageCount));
+                kafkaTestSupport.produceSync(topic1Name, i, Integer.toString(i));
+                kafkaTestSupport.produceSync(topic2Name, i - messageCount, Integer.toString(i - messageCount));
             }
 
             assertTrueEventually(() -> {
@@ -386,7 +390,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
     @Test
     public void when_eventsInAllPartitions_then_watermarkOutputImmediately() throws Exception {
-        StreamKafkaP processor = createProcessor(properties(), 1, r -> entry(r.key(), r.value()), 10_000);
+        var processor = createProcessor(properties(), 1, r -> entry(r.key(), r.value()), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext());
 
@@ -406,7 +410,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     public void when_noAssignedPartitionAndAddedLater_then_resumesFromIdle() throws Exception {
         // we ask to create 5th out of 5 processors, but we have only 4 partitions and 1 topic
         // --> our processor will have nothing assigned
-        StreamKafkaP processor = createProcessor(properties(), 1, r -> entry(r.key(), r.value()), 10_000);
+        var processor = createProcessor(properties(), 1, r -> entry(r.key(), r.value()), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext()
                 .setTotalParallelism(INITIAL_PARTITION_COUNT + 1)
@@ -417,7 +421,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
         // add a partition and produce an event to it
         kafkaTestSupport.setPartitionCount(topic1Name, INITIAL_PARTITION_COUNT + 1);
-        Entry<Integer, String> value = produceEventToNewPartition(INITIAL_PARTITION_COUNT);
+        Entry<Integer, String> value = produceEventToNewPartition();
 
         Object actualEvent;
         do {
@@ -429,10 +433,10 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     @Test
     public void when_eventsInSinglePartition_then_watermarkAfterIdleTime() throws Exception {
         // When
-        StreamKafkaP processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 10_000);
+        var processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext());
-        kafkaTestSupport.produce(topic1Name, 10, "foo");
+        kafkaTestSupport.produceSync(topic1Name, 10, "foo");
 
         // Then
         assertEquals(entry(10, "foo"), consumeEventually(processor, outbox));
@@ -445,11 +449,11 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
     @Test
     public void when_snapshotSaved_then_offsetsRestored() throws Exception {
-        StreamKafkaP processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 10_000);
+        var processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext().setProcessingGuarantee(EXACTLY_ONCE));
 
-        kafkaTestSupport.produce(topic1Name, 0, "0");
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
         assertEquals(entry(0, "0"), consumeEventually(processor, outbox));
 
         // create snapshot
@@ -457,7 +461,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         Set<Entry<Object, Object>> snapshotItems = unwrapBroadcastKey(snapshot.queue());
 
         // consume one more item
-        kafkaTestSupport.produce(topic1Name, 1, "1");
+        kafkaTestSupport.produceSync(topic1Name, 1, "1");
         assertEquals(entry(1, "1"), consumeEventually(processor, outbox));
 
         // create new processor and restore snapshot
@@ -479,7 +483,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     }
 
     @Test
-    public void when_duplicateTopicsProvide_then_uniqueTopicsSubscribed() {
+    public void when_duplicateTopicsProvide_then_uniqueTopicsSubscribed() throws Exception {
         HazelcastInstance[] instances = instances();
         assertClusterSizeEventually(2, instances);
         String sinkListName = randomName();
@@ -501,8 +505,12 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         assertJobStatusEventually(job, RUNNING);
 
         int messageCount = 1000;
+        Future<?>[] futures = new Future[messageCount];
         for (int i = 0; i < messageCount; i++) {
-            kafkaTestSupport.produce(topic, i, Integer.toString(i));
+            futures[i] = kafkaTestSupport.produce(topic, i, Integer.toString(i));
+        }
+        for (Future<?> future : futures) {
+            future.get();
         }
 
         IList<Object> list = instances[0].getList(sinkListName);
@@ -538,7 +546,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     ) {
         ToLongFunctionEx<T> timestampFn = e ->
                 e instanceof Entry
-                        ? (int) ((Entry) e).getKey()
+                        ? (int) ((Entry<?, ?>) e).getKey()
                         : System.currentTimeMillis();
         EventTimePolicy<T> eventTimePolicy = eventTimePolicy(
                 timestampFn, limitingLag(LAG), 1, 0, idleTimeoutMillis);
@@ -549,11 +557,11 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     public void when_partitionAdded_then_consumedFromBeginning() throws Exception {
         Properties properties = properties();
         properties.setProperty("metadata.max.age.ms", "100");
-        StreamKafkaP processor = createProcessor(properties, 2, r -> entry(r.key(), r.value()), 10_000);
+        var processor = createProcessor(properties, 2, r -> entry(r.key(), r.value()), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext());
 
-        kafkaTestSupport.produce(topic1Name, 0, "0");
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
         assertEquals(entry(0, "0"), consumeEventually(processor, outbox));
 
         kafkaTestSupport.setPartitionCount(topic1Name, INITIAL_PARTITION_COUNT + 2);
@@ -567,14 +575,19 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         }
         assertTrue("nothing was produced to partition-1", somethingInPartition1);
         Set<Object> receivedEvents = new HashSet<>();
-        for (int i = 1; i < 11; i++) {
+        for (int i = 1; i < 11;) {
             try {
-                receivedEvents.add(consumeEventually(processor, outbox));
+                Object consumed = consumeEventually(processor, outbox);
+                if (!(consumed instanceof Watermark)) {
+                    receivedEvents.add(consumed);
+                    i++;
+                }
             } catch (AssertionError e) {
-                throw new AssertionError("Unable to receive 10 items, events so far: " + receivedEvents);
+                throw new AssertionError("Unable to receive 10 items, events so far: " + receivedEvents, e);
             }
         }
-        assertEquals(range(1, 11).mapToObj(i -> entry(i, Integer.toString(i))).collect(toSet()), receivedEvents);
+        var expected = range(1, 11).mapToObj(i -> entry(i, Integer.toString(i))).collect(toSet());
+        assertThat(receivedEvents).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
@@ -600,8 +613,8 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         context.setProcessingGuarantee(AT_LEAST_ONCE);
         processor.init(outbox, context);
 
-        kafkaTestSupport.produce(topic1Name, 0, "0"); // first record will be skipped due to topics config
-        kafkaTestSupport.produce(topic1Name, 1, "1");
+        kafkaTestSupport.produceSync(topic1Name, 0, "0"); // first record will be skipped due to topics config
+        kafkaTestSupport.produceSync(topic1Name, 1, "1");
         assertEquals(entry(1, "1"), consumeEventually(processor, outbox));
 
         kafkaTestSupport.setPartitionCount(topic1Name, INITIAL_PARTITION_COUNT + 2);
@@ -614,15 +627,20 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
             somethingInPartition1 |= recordMetadata.partition() == 1;
         }
         assertTrue("nothing was produced to partition-1", somethingInPartition1);
-        Set<Object> receivedEvents = new HashSet<>();
-        for (int i = 2; i < 12; i++) {
+        Set<Object> receivedEvents = new LinkedHashSet<>();
+        for (int i = 2; i < 12;) {
             try {
-                receivedEvents.add(consumeEventually(processor, outbox));
+                Object consumed = consumeEventually(processor, outbox);
+                if (!(consumed instanceof Watermark)) {
+                    receivedEvents.add(consumed);
+                    i++;
+                }
             } catch (AssertionError e) {
-                throw new AssertionError("Unable to receive 10 items, events so far: " + receivedEvents);
+                throw new AssertionError("Unable to receive 10 items, events so far: " + receivedEvents, e);
             }
         }
-        assertEquals(range(2, 12).mapToObj(i -> entry(i, Integer.toString(i))).collect(toSet()), receivedEvents);
+        var expected = range(2, 12).mapToObj(i -> entry(i, Integer.toString(i))).collect(toSet());
+        assertThat(receivedEvents).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test
@@ -640,7 +658,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         assertTrueEventually(() -> {
             // This might add multiple `0` events to the topic - we need to do this because the source starts from
             // the latest position and we don't exactly know when it starts, so we try repeatedly
-            kafkaTestSupport.produce(topic1Name, 0, "0").get();
+            kafkaTestSupport.produce(topic1Name, 0, "0");
             assertFalse(sinkList.isEmpty());
             assertEquals(entry(0, "0"), sinkList.get(0));
         });
@@ -652,7 +670,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         kafkaTestSupport.setPartitionCount(topic1Name, INITIAL_PARTITION_COUNT + 2);
         // We produce to a partition that didn't exist during the previous job execution.
         // The job must start reading the new partition from the beginning, otherwise it would miss this item.
-        Entry<Integer, String> event = produceEventToNewPartition(INITIAL_PARTITION_COUNT);
+        Entry<Integer, String> event = produceEventToNewPartition();
 
         job.resume();
         // All events after the resume will be loaded: the non-consumed zeroes, and the possibly multiple
@@ -661,7 +679,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     }
 
     @Test
-    public void when_autoOffsetResetLatest_then_doesNotReadOldMessages() throws Exception {
+    public void when_autoOffsetResetLatest_then_doesNotReadOldMessages() {
         String sinkListName = randomName();
         IList<Entry<Integer, String>> sinkList = instance().getList(sinkListName);
         Pipeline p = Pipeline.create();
@@ -671,7 +689,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
                 .withoutTimestamps()
                 .writeTo(Sinks.list(sinkList));
 
-        kafkaTestSupport.produce(topic1Name, 0, "0").get();
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
         instance().getJet().newJob(p);
         assertTrueAllTheTime(() -> assertTrue(sinkList.isEmpty()), 2);
     }
@@ -687,7 +705,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
                 .withoutTimestamps()
                 .writeTo(Sinks.list(sinkList));
 
-        kafkaTestSupport.produce(topic1Name, 0, "0").get();
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
         Job job = instance().getJet().newJob(p);
         assertTrueEventually(() -> assertEquals(singletonList(entry(0, "0")), sinkList));
         job.suspend();
@@ -711,12 +729,12 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
                 .withoutTimestamps()
                 .writeTo(Sinks.list(sinkList));
 
-        kafkaTestSupport.produce(topic1Name, 0, "0").get();
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
         Job job = instance().getJet().newJob(p);
         assertTrueEventually(() -> assertEquals(singletonList(entry(0, "0")), sinkList));
         job.suspend();
         assertJobStatusEventually(job, SUSPENDED);
-        kafkaTestSupport.produce(topic1Name, 0, "1").get();
+        kafkaTestSupport.produceSync(topic1Name, 0, "1");
         sinkList.clear();
         job.resume();
         assertTrueEventually(() ->
@@ -725,7 +743,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
     @Test
     public void when_noAssignedPartitions_then_emitIdleMsgImmediately() throws Exception {
-        StreamKafkaP processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 100_000);
+        var processor = createProcessor(properties(), 2, r -> entry(r.key(), r.value()), 100_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         TestProcessorContext context = new TestProcessorContext()
                 // Set global parallelism to higher number than number of partitions
@@ -741,10 +759,10 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
     @Test
     public void when_customProjection_then_used() throws Exception {
         // When
-        StreamKafkaP processor = createProcessor(properties(), 2, r -> r.key() + "=" + r.value(), 10_000);
+        var processor = createProcessor(properties(), 2, r -> r.key() + "=" + r.value(), 10_000);
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext());
-        kafkaTestSupport.produce(topic1Name, 0, "0");
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
 
         // Then
         assertEquals("0=0", consumeEventually(processor, outbox));
@@ -759,7 +777,7 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
                 1, 0,
                 0
         );
-        StreamKafkaP processor = new StreamKafkaP<Integer, String, String>(
+        var processor = new StreamKafkaP<Integer, String, String>(
                 (c) -> new KafkaConsumer<>(properties()),
                 singletonList(topic1Name),
                 r -> "0".equals(r.value()) ? null : r.value(),
@@ -767,8 +785,8 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         );
         TestOutbox outbox = new TestOutbox(new int[]{10}, 10);
         processor.init(outbox, new TestProcessorContext());
-        kafkaTestSupport.produce(topic1Name, 0, "0");
-        kafkaTestSupport.produce(topic1Name, 0, "1");
+        kafkaTestSupport.produceSync(topic1Name, 0, "0");
+        kafkaTestSupport.produceSync(topic1Name, 0, "1");
 
         // Then
         assertTrueEventually(() -> {
@@ -781,8 +799,10 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
 
     @Test
     public void when_topicDoesNotExist_then_partitionCountGreaterThanZero() {
-        KafkaConsumer<Integer, String> c = kafkaTestSupport.createConsumer("non-existing-topic");
-        assertGreaterOrEquals("partition count", c.partitionsFor("non-existing-topic", Duration.ofSeconds(2)).size(), 1);
+        try (var c = kafkaTestSupport.createConsumer("non-existing-topic")) {
+            assertGreaterOrEquals("partition count", c.partitionsFor("non-existing-topic",
+                    Duration.ofSeconds(2)).size(), 1);
+        }
     }
 
     @Test
@@ -791,9 +811,10 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         properties.put("bootstrap.servers", "127.0.0.1:33333");
         properties.put("key.deserializer", ByteArrayDeserializer.class.getName());
         properties.put("value.deserializer", ByteArrayDeserializer.class.getName());
-        KafkaConsumer<Integer, String> c = new KafkaConsumer<>(properties);
-        assertThatThrownBy(() -> c.partitionsFor("t", Duration.ofMillis(100)))
-                .isInstanceOf(TimeoutException.class);
+        try (var c = new KafkaConsumer<Integer, String>(properties)) {
+            assertThatThrownBy(() -> c.partitionsFor("t", Duration.ofMillis(100)))
+                    .isInstanceOf(TimeoutException.class);
+        }
     }
 
     @Test
@@ -829,14 +850,14 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         return (T) outbox.queue(0).poll();
     }
 
-    private void assertNoMoreItems(StreamKafkaP processor, TestOutbox outbox) throws InterruptedException {
+    private void assertNoMoreItems(StreamKafkaP<?, ?, ?> processor, TestOutbox outbox) throws InterruptedException {
         Thread.sleep(1000);
         assertFalse(processor.complete());
         assertTrue("unexpected items in outbox: " + outbox.queue(0), outbox.queue(0).isEmpty());
     }
 
     @SuppressWarnings("unchecked")
-    private Set<Entry<Object, Object>> unwrapBroadcastKey(Collection c) {
+    private Set<Entry<Object, Object>> unwrapBroadcastKey(Collection<?> c) {
         // BroadcastKey("x") != BroadcastKey("x") ==> we need to extract the key
         Set<Entry<Object, Object>> res = new HashSet<>();
         for (Object o : c) {
@@ -869,13 +890,13 @@ public class StreamKafkaPTest extends SimpleTestInClusterSupport {
         return new SimpleImmutableEntry<>(i, Integer.toString(i));
     }
 
-    private Entry<Integer, String> produceEventToNewPartition(int partitionId) throws Exception {
+    private Entry<Integer, String> produceEventToNewPartition() throws Exception {
         String value;
         while (true) {
             value = UuidUtil.newUnsecureUuidString();
-            Future<RecordMetadata> future = kafkaTestSupport.produce(topic1Name, partitionId, null, 0, value);
+            Future<RecordMetadata> future = kafkaTestSupport.produce(topic1Name, INITIAL_PARTITION_COUNT, null, 0, value);
             RecordMetadata recordMetadata = future.get();
-            if (recordMetadata.partition() == partitionId) {
+            if (recordMetadata.partition() == INITIAL_PARTITION_COUNT) {
                 // if the event was added to the correct partition, stop
                 break;
             }

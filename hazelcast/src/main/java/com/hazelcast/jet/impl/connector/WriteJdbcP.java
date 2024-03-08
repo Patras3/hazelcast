@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,11 @@ public final class WriteJdbcP<T> extends XaSinkProcessorBase {
     private int idleCount;
     private boolean supportsBatch;
     private int batchCount;
+
+    static {
+        // workaround for https://github.com/hazelcast/hazelcast-jet/issues/2603
+        DriverManager.getDrivers();
+    }
 
     public WriteJdbcP(
             @Nonnull String updateQuery,
@@ -179,8 +184,6 @@ public final class WriteJdbcP<T> extends XaSinkProcessorBase {
     @Override
     public void init(@Nonnull Outbox outbox, @Nonnull Context context) throws Exception {
         super.init(outbox, context);
-        // workaround for https://github.com/hazelcast/hazelcast-jet/issues/2603
-        DriverManager.getDrivers();
         logger = context.logger();
         this.context = context;
         connectAndPrepareStatement();

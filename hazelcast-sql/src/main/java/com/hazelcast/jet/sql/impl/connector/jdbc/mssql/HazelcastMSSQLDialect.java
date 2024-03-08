@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,12 +94,10 @@ public class HazelcastMSSQLDialect extends MssqlSqlDialect implements TypeResolv
 
     @Override
     public QueryDataType resolveType(String columnTypeName, int precision, int scale) {
-        switch (columnTypeName.toUpperCase(Locale.ROOT)) {
-            case "FLOAT":
-                return QueryDataType.DOUBLE;
-
-            default:
-                return DefaultTypeResolver.resolveType(columnTypeName, precision, scale);
-        }
+        return switch (columnTypeName.toUpperCase(Locale.ROOT)) {
+            case "FLOAT" -> QueryDataType.DOUBLE;
+            case "DATETIME2", "SMALLDATETIME" -> QueryDataType.TIMESTAMP;
+            default -> DefaultTypeResolver.resolveType(columnTypeName, precision, scale);
+        };
     }
 }

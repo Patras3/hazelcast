@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,10 +424,10 @@ class KubernetesFakeUtils {
                 .build();
     }
 
-
     static Service serviceLb(ServicePort port, String lbIp) {
         return new ServiceBuilder()
                 .withSpec(new ServiceSpecBuilder()
+                        .withType(KubernetesClient.SERVICE_TYPE_LOADBALANCER)
                         .withPorts(port)
                         .build())
                 .withStatus(new ServiceStatusBuilder()
@@ -443,6 +443,7 @@ class KubernetesFakeUtils {
     static Service serviceLbHost(ServicePort port, String hostname) {
         return new ServiceBuilder()
                 .withSpec(new ServiceSpecBuilder()
+                        .withType(KubernetesClient.SERVICE_TYPE_LOADBALANCER)
                         .withPorts(port)
                         .build())
                 .withStatus(new ServiceStatusBuilder()
@@ -455,10 +456,20 @@ class KubernetesFakeUtils {
                 .build();
     }
 
+    static Service serviceLbWithoutAddr(ServicePort... port) {
+        return new ServiceBuilder()
+                .withSpec(new ServiceSpecBuilder()
+                        .withType(KubernetesClient.SERVICE_TYPE_LOADBALANCER)
+                        .withPorts(port)
+                        .build())
+                .build();
+    }
+
     static Service service(ServicePort... ports) {
         return new ServiceBuilder()
                 .withMetadata(new ObjectMetaBuilder().withName("service").build())
                 .withSpec(new ServiceSpecBuilder()
+                        .withType(KubernetesClient.SERVICE_TYPE_NODEPORT)
                         .withPorts(ports)
                         .build())
                 .build();

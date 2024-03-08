@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,6 @@ import static com.hazelcast.jet.impl.util.ExceptionUtil.rethrow;
 import static com.hazelcast.jet.impl.util.ImdgUtil.asClientConfig;
 import static com.hazelcast.jet.impl.util.ImdgUtil.maybeUnwrapImdgFunction;
 import static com.hazelcast.jet.impl.util.ImdgUtil.maybeUnwrapImdgPredicate;
-import static com.hazelcast.jet.impl.util.LoggingUtil.logFinest;
 import static com.hazelcast.jet.impl.util.Util.arrayIndexOf;
 import static com.hazelcast.jet.impl.util.Util.checkSerializable;
 import static com.hazelcast.jet.impl.util.Util.distributeObjects;
@@ -241,7 +240,7 @@ public final class StreamEventJournalP<E, T> extends AbstractProcessor {
         }
         boolean done = emitFromTraverserToSnapshot(snapshotTraverser);
         if (done) {
-            logFinest(getLogger(), "Saved snapshot. partitions=%s, offsets=%s, watermark=%d",
+            getLogger().finest("Saved snapshot. partitions=%s, offsets=%s, watermark=%d",
                     Arrays.toString(partitionIds), Arrays.toString(emitOffsets), eventTimeMapper.getWatermark(0));
             snapshotTraverser = null;
         }
@@ -266,7 +265,7 @@ public final class StreamEventJournalP<E, T> extends AbstractProcessor {
 
     @Override
     public boolean finishSnapshotRestore() {
-        logFinest(getLogger(), "Restored snapshot. partitions=%s, offsets=%s",
+        getLogger().finest("Restored snapshot. partitions=%s, offsets=%s",
                 Arrays.toString(partitionIds), Arrays.toString(readOffsets));
         return true;
     }

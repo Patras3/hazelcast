@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class MemberCompatibilityTest_2_2 {
     @Test
     public void test_ClientAuthenticationCodec_encodeResponse() {
         int fileClientMessageIndex = 1;
-        ClientMessage encoded = ClientAuthenticationCodec.encodeResponse(aByte, anAddress, aUUID, aByte, aString, anInt, aUUID, aBoolean, aListOfIntegers, aByteArray);
+        ClientMessage encoded = ClientAuthenticationCodec.encodeResponse(aByte, anAddress, aUUID, aByte, aString, anInt, aUUID, aBoolean, aListOfIntegers, aByteArray, anInt, aListOfMemberInfos, anInt, aListOfUUIDToListOfIntegers);
         ClientMessage fromFile = clientMessages.get(fileClientMessageIndex);
         compareClientMessages(fromFile, encoded);
     }
@@ -105,7 +105,7 @@ public class MemberCompatibilityTest_2_2 {
     @Test
     public void test_ClientAuthenticationCustomCodec_encodeResponse() {
         int fileClientMessageIndex = 3;
-        ClientMessage encoded = ClientAuthenticationCustomCodec.encodeResponse(aByte, anAddress, aUUID, aByte, aString, anInt, aUUID, aBoolean, aListOfIntegers, aByteArray);
+        ClientMessage encoded = ClientAuthenticationCustomCodec.encodeResponse(aByte, anAddress, aUUID, aByte, aString, anInt, aUUID, aBoolean, aListOfIntegers, aByteArray, anInt, aListOfMemberInfos, anInt, aListOfUUIDToListOfIntegers);
         ClientMessage fromFile = clientMessages.get(fileClientMessageIndex);
         compareClientMessages(fromFile, encoded);
     }
@@ -6351,6 +6351,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(isEqual(aString, parameters.mergePolicy));
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6376,6 +6377,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(isEqual(aString, parameters.mergePolicy));
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6421,6 +6423,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(isEqual(aString, parameters.mergePolicy));
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6445,6 +6448,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(isEqual(aString, parameters.mergePolicy));
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6468,6 +6472,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aListOfListenerConfigHolders, parameters.listenerConfigs));
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6488,6 +6493,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aBoolean, parameters.statisticsEnabled));
         assertTrue(isEqual(aBoolean, parameters.multiThreadingEnabled));
         assertTrue(isEqual(aListOfListenerConfigHolders, parameters.listenerConfigs));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6508,6 +6514,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(anInt, parameters.queueCapacity));
         assertTrue(isEqual(aBoolean, parameters.statisticsEnabled));
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6530,6 +6537,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aString, parameters.splitBrainProtectionName));
         assertTrue(parameters.isStatisticsEnabledExists);
         assertTrue(isEqual(aBoolean, parameters.statisticsEnabled));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6555,6 +6563,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(parameters.isStatisticsEnabledExists);
         assertTrue(isEqual(aBoolean, parameters.statisticsEnabled));
         assertFalse(parameters.isCapacityPolicyExists);
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6583,6 +6592,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(anInt, parameters.mergeBatchSize));
         assertTrue(parameters.isPriorityComparatorClassNameExists);
         assertTrue(isEqual(aString, parameters.priorityComparatorClassName));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6630,6 +6640,7 @@ public class MemberCompatibilityTest_2_2 {
         assertFalse(parameters.isDataPersistenceConfigExists);
         assertFalse(parameters.isTieredStoreConfigExists);
         assertFalse(parameters.isPartitioningAttributeConfigsExists);
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6651,6 +6662,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aBoolean, parameters.statisticsEnabled));
         assertTrue(isEqual(aString, parameters.topicOverloadPolicy));
         assertTrue(isEqual(aData, parameters.executor));
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6694,6 +6706,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aHotRestartConfig, parameters.hotRestartConfig));
         assertFalse(parameters.isMerkleTreeConfigExists);
         assertFalse(parameters.isDataPersistenceConfigExists);
+        assertFalse(parameters.isUserCodeNamespaceExists);
     }
 
     @Test
@@ -6958,7 +6971,7 @@ public class MemberCompatibilityTest_2_2 {
     @Test
     public void test_MCGetMapConfigCodec_encodeResponse() {
         int fileClientMessageIndex = 774;
-        ClientMessage encoded = MCGetMapConfigCodec.encodeResponse(anInt, anInt, anInt, anInt, anInt, anInt, anInt, aBoolean, anInt, aString, aListOfIndexConfigs);
+        ClientMessage encoded = MCGetMapConfigCodec.encodeResponse(anInt, anInt, anInt, anInt, anInt, anInt, anInt, aBoolean, anInt, aString, aListOfIndexConfigs, aWanReplicationRef);
         ClientMessage fromFile = clientMessages.get(fileClientMessageIndex);
         compareClientMessages(fromFile, encoded);
     }
@@ -6975,6 +6988,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(aBoolean, parameters.readBackupData));
         assertTrue(isEqual(anInt, parameters.maxSize));
         assertTrue(isEqual(anInt, parameters.maxSizePolicy));
+        assertFalse(parameters.isWanReplicationRefExists);
     }
 
     @Test
@@ -7238,6 +7252,7 @@ public class MemberCompatibilityTest_2_2 {
         assertTrue(isEqual(anInt, parameters.responseTimeoutMillis));
         assertTrue(isEqual(anInt, parameters.ackType));
         assertTrue(isEqual(anInt, parameters.queueFullBehavior));
+        assertFalse(parameters.isConsistencyCheckStrategyExists);
     }
 
     @Test

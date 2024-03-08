@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,6 +226,14 @@ public abstract class ResourceRegistry<W extends WaitKey, R extends BlockingReso
 
     public final CPGroupId getGroupId() {
         return groupId;
+    }
+
+    public Map<String, R> getResources() {
+        return resources;
+    }
+
+    public Set<String> getDestroyedNames() {
+        return destroyedNames;
     }
 
     // queried locally in tests

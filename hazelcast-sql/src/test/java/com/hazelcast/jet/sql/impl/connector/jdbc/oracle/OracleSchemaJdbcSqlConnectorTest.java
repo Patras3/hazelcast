@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.hazelcast.jet.sql.impl.connector.jdbc.oracle;
 
 import com.hazelcast.jet.sql.impl.connector.jdbc.SchemaJdbcConnectorTest;
 import com.hazelcast.test.annotation.NightlyTest;
-import com.hazelcast.test.jdbc.OracleDatabaseProvider;
+import com.hazelcast.test.jdbc.OracleDatabaseProviderFactory;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
@@ -31,7 +31,7 @@ public class OracleSchemaJdbcSqlConnectorTest extends SchemaJdbcConnectorTest {
 
     @BeforeClass
     public static void beforeClass() {
-        initialize(new OracleDatabaseProvider());
+        initialize(OracleDatabaseProviderFactory.createTestDatabaseProvider());
     }
 
     @Before

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.hazelcast.internal.util;
 import com.hazelcast.internal.serialization.Data;
 import com.hazelcast.internal.serialization.SerializationService;
 
-import javax.annotation.Nonnull;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,17 +152,5 @@ public final class CollectionUtil {
     /** Returns an empty Collection if argument is null. **/
     public static <T> Collection<T> nullToEmpty(Collection<T> collection) {
         return collection == null ? Collections.<T>emptyList() : collection;
-    }
-
-    /**
-     * Returns true, if the two collections contain any common item.
-     */
-    public static <T> boolean hasNonEmptyIntersection(@Nonnull Collection<T> a, @Nonnull Collection<T> b) {
-        for (T t : a) {
-            if (b.contains(t)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.hazelcast.sql.impl.schema.Mapping;
 import com.hazelcast.sql.impl.schema.SqlCatalogObject;
 import com.hazelcast.sql.impl.type.QueryDataType;
 import com.hazelcast.sql.impl.type.QueryDataTypeFamily;
-import com.hazelcast.sql.impl.type.QueryDataTypeUtils;
 import com.hazelcast.sql.impl.type.converter.Converter;
 import com.hazelcast.sql.impl.type.converter.Converters;
 
@@ -139,7 +138,7 @@ public class Type implements Serializable, SqlCatalogObject {
             String typeName = in.readString();
             type = converter.getTypeFamily() == QueryDataTypeFamily.OBJECT && typeName != null
                     ? new QueryDataType(typeName)
-                    : QueryDataTypeUtils.resolveTypeForClass(converter.getValueClass());
+                    : QueryDataType.resolveForConverter(converter);
         }
 
         @Override

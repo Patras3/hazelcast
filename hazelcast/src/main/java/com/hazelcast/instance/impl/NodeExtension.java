@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.hazelcast.internal.hotrestart.InternalHotRestartService;
 import com.hazelcast.internal.jmx.ManagementService;
 import com.hazelcast.internal.management.TimedMemberStateFactory;
 import com.hazelcast.internal.memory.MemoryStats;
+import com.hazelcast.internal.namespace.UserCodeNamespaceService;
 import com.hazelcast.internal.networking.ChannelInitializer;
 import com.hazelcast.internal.networking.InboundHandler;
 import com.hazelcast.internal.networking.OutboundHandler;
@@ -38,6 +39,7 @@ import com.hazelcast.internal.serialization.InternalSerializationService;
 import com.hazelcast.internal.serialization.impl.compact.schema.MemberSchemaService;
 import com.hazelcast.internal.server.ServerConnection;
 import com.hazelcast.internal.server.ServerContext;
+import com.hazelcast.internal.tpc.TpcServerBootstrap;
 import com.hazelcast.internal.util.ByteArrayProcessor;
 import com.hazelcast.internal.util.UuidUtil;
 import com.hazelcast.jet.JetService;
@@ -420,4 +422,13 @@ public interface NodeExtension {
      * @throws java.lang.IllegalStateException if the method call is not allowed
      */
     SSLEngineFactory createSslEngineFactory(SSLConfig sslConfig);
+
+    /**
+     * Retrieves the {@link UserCodeNamespaceService} provided by the implementing class.
+     *
+     * @return the {@link UserCodeNamespaceService} instance for this member.
+     */
+    UserCodeNamespaceService getNamespaceService();
+
+    TpcServerBootstrap createTpcServerBootstrap();
 }

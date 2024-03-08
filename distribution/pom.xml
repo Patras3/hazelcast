@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+  ~ Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.hazelcast</groupId>
         <artifactId>hazelcast-root</artifactId>
-        <version>5.4.0-SNAPSHOT</version>
+        <version>5.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -55,7 +55,7 @@
                         <includedLicense>CDDL</includedLicense>
                         <includedLicense>CDDL 1.1</includedLicense>
                         <includedLicense>Lesser General Public License (LGPL)</includedLicense>
-                        <includedLicense>The GNU General Public License, v2 with FOSS exception</includedLicense>
+                        <includedLicense>The GNU General Public License, v2 with Universal FOSS Exception, v1.0</includedLicense>
                         <includedLicense>The Go license</includedLicense>
                         <includedLicense>Elastic License 2.0</includedLicense>
                     </includedLicenses>
@@ -209,7 +209,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
+            <artifactId>log4j-slf4j2-impl</artifactId>
         </dependency>
 
         <!-- Prometheus to expose JMX metrics as HTTP endpoint -->

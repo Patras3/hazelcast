@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.hazelcast.internal.cluster.impl.operations.ShutdownNodeOp;
 import com.hazelcast.internal.cluster.impl.operations.TriggerExplicitSuspicionOp;
 import com.hazelcast.internal.metrics.MetricsRegistry;
 import com.hazelcast.internal.metrics.Probe;
+import com.hazelcast.internal.namespace.NamespaceUtil;
 import com.hazelcast.internal.nio.Connection;
 import com.hazelcast.internal.nio.ConnectionListener;
 import com.hazelcast.internal.services.ManagedService;
@@ -536,14 +537,7 @@ public class ClusterServiceImpl implements ClusterService, ConnectionListener, M
         return nodeEngine;
     }
 
-    /**
-     * Returns whether member with given identity (either {@code UUID} or {@code Address}
-     * depending on Persistence is enabled or not) is a known missing member or not.
-     *
-     * @param address Address of the missing member
-     * @param uuid    Uuid of the missing member
-     * @return true if it's a known missing member, false otherwise
-     */
+    @Override
     public boolean isMissingMember(Address address, UUID uuid) {
         return membershipManager.isMissingMember(address, uuid);
     }
@@ -789,16 +783,19 @@ public class ClusterServiceImpl implements ClusterService, ConnectionListener, M
     @SuppressFBWarnings("BC_UNCONFIRMED_CAST")
     @Override
     public void dispatchEvent(MembershipEvent event, MembershipListener listener) {
-        switch (event.getEventType()) {
-            case MembershipEvent.MEMBER_ADDED:
-                listener.memberAdded(event);
-                break;
-            case MembershipEvent.MEMBER_REMOVED:
-                listener.memberRemoved(event);
-                break;
-            default:
-                throw new IllegalArgumentException("Unhandled event: " + event);
-        }
+        // Call with `null` namespace, which will fallback to a default Namespace if available
+        NamespaceUtil.runWithNamespace(nodeEngine, null, () -> {
+            switch (event.getEventType()) {
+                case MembershipEvent.MEMBER_ADDED:
+                    listener.memberAdded(event);
+                    break;
+                case MembershipEvent.MEMBER_REMOVED:
+                    listener.memberRemoved(event);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unhandled event: " + event);
+            }
+        });
     }
 
     public String getMemberListString() {

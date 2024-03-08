@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ public final class ProxyRegistry {
         INTERNAL_OBJECTS_PREFIXES.add(INTERNAL_JET_OBJECTS_PREFIX);
         INTERNAL_OBJECTS_PREFIXES.add("__mc.");
         INTERNAL_OBJECTS_PREFIXES.add("__sql.");
+        INTERNAL_OBJECTS_PREFIXES.add("__ts.");
     }
 
     private final ProxyServiceImpl proxyService;

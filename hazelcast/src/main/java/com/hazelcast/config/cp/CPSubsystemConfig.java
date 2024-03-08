@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.hazelcast.cp.CPSubsystem;
 import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.cp.session.CPSession;
 import com.hazelcast.cp.session.CPSessionManagementService;
+import com.hazelcast.spi.annotation.PrivateApi;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
@@ -718,6 +719,15 @@ public class CPSubsystemConfig {
         return this;
     }
 
+    @PrivateApi
+    public CPSubsystemConfig setCpMapConfigs(Map<String, CPMapConfig> cpMapConfigs) {
+        this.cpMapConfigs.clear();
+        this.cpMapConfigs.putAll(cpMapConfigs);
+        for (Entry<String, CPMapConfig> entry : this.cpMapConfigs.entrySet()) {
+            entry.getValue().setName(entry.getKey());
+        }
+        return this;
+    }
 
     /**
      * Returns the map of {@link com.hazelcast.cp.CPMap} configurations
@@ -778,6 +788,8 @@ public class CPSubsystemConfig {
 
     /**
      * Sets the limit of permitted {@link com.hazelcast.cp.CPMap} instances.
+     * <p>
+     * This is a soft limit and is used exclusively by Hazelcast Management Center.
      * @param cpMapLimit limit of {@link com.hazelcast.cp.CPMap} instances
      * @throws IllegalArgumentException if {@code cpMapLimit < 0}
      */
@@ -792,6 +804,11 @@ public class CPSubsystemConfig {
      */
     public int getCPMapLimit() {
         return cpMapLimit;
+    }
+
+    @PrivateApi
+    public CPSubsystemConfig setMapLimit(int cpMapLimit) {
+        return setCPMapLimit(cpMapLimit);
     }
 
     @Override

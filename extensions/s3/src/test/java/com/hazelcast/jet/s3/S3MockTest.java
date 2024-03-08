@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class S3MockTest extends S3TestBase {
     @BeforeClass
     public static void setupS3() {
         assumeDockerEnabled();
-        s3MockContainer = new S3MockContainer("2.4.14");
+        s3MockContainer = new S3MockContainer("3.5.1");
         s3MockContainer.start();
         s3MockContainer.followOutput(outputFrame -> logger.info(outputFrame.getUtf8String().trim()));
         s3Client = s3Client(s3MockContainer.getHttpEndpoint());

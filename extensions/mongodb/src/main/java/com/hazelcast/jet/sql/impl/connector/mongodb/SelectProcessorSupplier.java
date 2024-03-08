@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class SelectProcessorSupplier extends MongoProcessorSupplier implements D
         Bson proj = fields(projection.stream().map(p -> p.projectionExpr).collect(toList()));
         List<String> projectedNames = projection.stream().map(p -> p.externalName).collect(toList());
         if (!projectedNames.contains("_id") && !stream) {
-            aggregates.setProjection(bsonToDocument(project(fields(excludeId(), proj))));
+            aggregates.setProjection(bsonToDocument(project(fields(proj, excludeId()))));
         } else {
             aggregates.setProjection(bsonToDocument(project(proj)));
         }

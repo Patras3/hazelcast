@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,8 @@ public class ClientEngineImpl implements ClientEngine, CoreService,
         String hzName = nodeEngine.getHazelcastInstance().getName();
         String internalName = name.substring("hz:".length());
         String threadNamePrefix = createThreadPoolName(hzName, internalName);
-        UnblockablePoolExecutorThreadFactory factory = new UnblockablePoolExecutorThreadFactory(threadNamePrefix, classLoader);
+        UnblockablePoolExecutorThreadFactory factory = new UnblockablePoolExecutorThreadFactory(threadNamePrefix,
+                classLoader, nodeEngine);
         return executionService.register(ExecutionService.CLIENT_EXECUTOR,
                 threadCount, coreSize * EXECUTOR_QUEUE_CAPACITY_PER_CORE, factory);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.hazelcast.internal.metrics.metricsets.GarbageCollectionMetricSet;
 import com.hazelcast.internal.metrics.metricsets.OperatingSystemMetricSet;
 import com.hazelcast.internal.metrics.metricsets.RuntimeMetricSet;
 import com.hazelcast.internal.metrics.metricsets.ThreadMetricSet;
+import com.hazelcast.internal.namespace.UserCodeNamespaceService;
 import com.hazelcast.internal.nio.Packet;
 import com.hazelcast.internal.partition.InternalPartitionService;
 import com.hazelcast.internal.partition.MigrationInfo;
@@ -154,7 +155,7 @@ public class NodeEngineImpl implements NodeEngine {
             this.serviceManager = new ServiceManagerImpl(this);
             this.executionService = new ExecutionServiceImpl(this);
             this.tenantControlService = new TenantControlServiceImpl(this);
-            this.tpcServerBootstrap = new TpcServerBootstrap(this);
+            this.tpcServerBootstrap = node.getNodeExtension().createTpcServerBootstrap();
             this.operationService = new OperationServiceImpl(this);
             this.eventService = new EventServiceImpl(this);
             this.operationParker = new OperationParkerImpl(this);
@@ -639,5 +640,10 @@ public class NodeEngineImpl implements NodeEngine {
                 throw new UnsupportedOperationException("Jet is not enabled on this node");
             };
         }
+    }
+
+    @Override
+    public UserCodeNamespaceService getNamespaceService() {
+        return node.getNamespaceService();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,6 +127,7 @@ public class MemberStateImplTest extends HazelcastTestSupport {
         memberState.setExecutorsWithStats(singleton("executor-1"));
         memberState.setCachesWithStats(singleton("cache-1"));
         memberState.setFlakeIdGeneratorsWithStats(singleton("flakeIdGenerator-1"));
+        memberState.setUserCodeNamespacesWithStats(singleton("userCodeNamespace-1"));
         memberState.setOperationStats(new LocalOperationStatsImpl());
         memberState.setClients(clients);
         memberState.setNodeState(state);
@@ -154,6 +155,7 @@ public class MemberStateImplTest extends HazelcastTestSupport {
         assertEquals(singleton("executor-1"), deserialized.getExecutorsWithStats());
         assertEquals(singleton("cache-1"), deserialized.getCachesWithStats());
         assertEquals(singleton("flakeIdGenerator-1"), deserialized.getFlakeIdGeneratorsWithStats());
+        assertEquals(singleton("userCodeNamespace-1"), deserialized.getUserCodeNamespacesWithStats());
         assertNotNull(deserialized.getOperationStats());
 
         client = deserialized.getClients().iterator().next();

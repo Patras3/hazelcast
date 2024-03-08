@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 Hazelcast Inc.
+ * Copyright 2024 Hazelcast Inc.
  *
  * Licensed under the Hazelcast Community License (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static com.hazelcast.dataconnection.impl.DataConnectionTestUtil.DUMMY_TYPE;
 import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 
@@ -35,7 +37,7 @@ public class GetDdlTest extends SqlTestSupport {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        initialize(1, null);
+        initializeWithClient(1, null, null);
     }
 
     @Test
@@ -61,7 +63,7 @@ public class GetDdlTest extends SqlTestSupport {
     @Test
     public void when_queryViewFromRelationNamespace_then_success() {
         createMapping("a", int.class, int.class);
-        instance().getSql().execute("CREATE VIEW v AS SELECT * FROM a");
+        instance().getSql().executeUpdate("CREATE VIEW v AS SELECT * FROM a");
 
         assertRowsAnyOrder("SELECT GET_DDL('relation', 'v')", List.of(
                 new Row("CREATE OR REPLACE VIEW \"hazelcast\".\"public\".\"v\" AS" + LE +
@@ -80,7 +82,7 @@ public class GetDdlTest extends SqlTestSupport {
                 "  'typeClass'='foo'" + LE +
                 ")";
 
-        instance().getSql().execute(createTypeQuery);
+        instance().getSql().executeUpdate(createTypeQuery);
         assertRowsAnyOrder("SELECT GET_DDL('relation', 't')", List.of(new Row(createTypeQuery)));
     }
 
@@ -88,7 +90,7 @@ public class GetDdlTest extends SqlTestSupport {
     public void when_queryTypeFromRelationNamespace_withoutFieldsAndOptions_then_success() {
         String createTypeQuery = "CREATE OR REPLACE TYPE \"hazelcast\".\"public\".\"t\"";
 
-        instance().getSql().execute(createTypeQuery);
+        instance().getSql().executeUpdate(createTypeQuery);
         assertRowsAnyOrder("SELECT GET_DDL('relation', 't')", List.of(new Row(createTypeQuery)));
     }
 
@@ -96,20 +98,22 @@ public class GetDdlTest extends SqlTestSupport {
     public void when_queryDataConnectionFromDataConnectionNamespace_then_success() {
         String createDataConnectionQuery = "CREATE OR REPLACE DATA CONNECTION \"hazelcast\".\"public\".\"dl\"" + LE
                 + "TYPE \"dummy\"" + LE + "SHARED";
+        String createDataConnectionQueryFixedType = "CREATE OR REPLACE DATA CONNECTION \"hazelcast\".\"public\".\"dl\"" + LE
+                + "TYPE \"DUMMY\"" + LE + "SHARED";
 
-        instance().getSql().execute(createDataConnectionQuery);
-        assertRowsAnyOrder("SELECT GET_DDL('dataconnection', 'dl')", List.of(new Row(createDataConnectionQuery)));
+        instance().getSql().executeUpdate(createDataConnectionQuery);
+        assertRowsAnyOrder("SELECT GET_DDL('dataconnection', 'dl')", List.of(new Row(createDataConnectionQueryFixedType)));
     }
 
     @Test
     public void when_queryDataConnectionWithByKeyPlan_then_success() {
         createMapping("a", Integer.class, String.class);
-        createDataConnection(instance(), "dl", "DUMMY", true, Collections.emptyMap());
+        createDataConnection(instance(), "dl", DUMMY_TYPE, true, Collections.emptyMap());
         IMap<Object, Object> map = instance().getMap("a");
         map.put(1, "dl");
 
         String ddl = "CREATE OR REPLACE DATA CONNECTION \"hazelcast\".\"public\".\"dl\"" + LE
-                + "TYPE \"dummy\"" + LE + "SHARED";
+                + "TYPE \"DUMMY\"" + LE + "SHARED";
 
         assertRowsAnyOrder("SELECT __key, GET_DDL('dataconnection', this) FROM a WHERE __key = 1",
                 List.of(new Row(1, ddl))
@@ -118,36 +122,39 @@ public class GetDdlTest extends SqlTestSupport {
 
     @Test
     public void when_queryNullNamespace_then_throws() {
-        SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL(null, 'b')");
-
-        assertThatThrownBy(() -> sqlRows.iterator().next())
-                .hasCauseInstanceOf(QueryException.class)
-                .hasMessageContaining("Namespace must not be null for GET_DDL");
+        try (SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL(null, 'b')")) {
+            assertThatThrownBy(() -> sqlRows.iterator().next())
+                    .hasCauseInstanceOf(QueryException.class)
+                    .hasMessageContaining("Namespace must not be null for GET_DDL");
+        }
     }
 
     @Test
     public void when_queryNotSupportedNamespace_then_throws() {
-        SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('a', 'b')");
+        try (SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('a', 'b')")) {
+            assertThatThrownBy(() -> sqlRows.iterator().next())
+                    .hasCauseInstanceOf(QueryException.class)
+                    .hasMessageContaining("Namespace 'a' is not supported.");
+        }
 
-        assertThatThrownBy(() -> sqlRows.iterator().next())
-                .hasCauseInstanceOf(QueryException.class)
-                .hasMessageContaining("Namespace 'a' is not supported.");
     }
 
     @Test
     public void when_queryNullObject_then_throws() {
-        SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('relation', NULL)");
-        assertThatThrownBy(() -> sqlRows.iterator().next())
-                .hasCauseInstanceOf(QueryException.class)
-                .hasMessageContaining("Object_name must not be null for GET_DDL");
+        try (SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('relation', NULL)")) {
+            assertThatThrownBy(() -> sqlRows.iterator().next())
+                    .hasCauseInstanceOf(QueryException.class)
+                    .hasMessageContaining("Object_name must not be null for GET_DDL");
+        }
     }
 
     @Test
     public void when_queryNonExistingObject_then_throws() {
-        SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('relation', 'bbb')");
-        assertThatThrownBy(() -> sqlRows.iterator().next())
-                .hasCauseInstanceOf(QueryException.class)
-                .hasMessageContaining("Object 'bbb' does not exist in namespace 'relation'");
+        try (SqlResult sqlRows = instance().getSql().execute("SELECT GET_DDL('relation', 'bbb')")) {
+            assertThatThrownBy(() -> sqlRows.iterator().next())
+                    .hasCauseInstanceOf(QueryException.class)
+                    .hasMessageContaining("Object 'bbb' does not exist in namespace 'relation'");
+        }
     }
 
     @Test
@@ -206,16 +213,33 @@ public class GetDdlTest extends SqlTestSupport {
     public void when_queryDataConnectionWithCreateJob_then_success() {
         String createDataConnectionQuery = "CREATE OR REPLACE DATA CONNECTION \"hazelcast\".\"public\".\"dl\"" + LE
                 + "TYPE \"dummy\"" + LE + "SHARED";
+        String createDataConnectionQueryFixedType = "CREATE OR REPLACE DATA CONNECTION \"hazelcast\".\"public\".\"dl\"" + LE
+                + "TYPE \"DUMMY\"" + LE + "SHARED";
         String createJobQuery = "CREATE JOB j AS SINK INTO map "
                 + "SELECT v, v FROM (SELECT GET_DDL('dataconnection', 'dl') AS v)";
 
         IMap<String, String> map = instance().getMap("map");
         createMapping("map", String.class, String.class);
 
-        instance().getSql().execute(createDataConnectionQuery);
-        instance().getSql().execute(createJobQuery);
+        instance().getSql().executeUpdate(createDataConnectionQuery);
+        instance().getSql().executeUpdate(createJobQuery);
 
         assertEqualsEventually(map::size, 1);
-        assertEquals(map.values().iterator().next(), createDataConnectionQuery);
+        assertEquals(map.values().iterator().next(), createDataConnectionQueryFixedType);
+    }
+
+    @Test
+    public void when_updateWithGetDdl_then_success() {
+        createMapping("main", Integer.class, String.class);
+        createMapping("target", Integer.class, String.class);
+        var sql = client().getSql();
+        sql.executeUpdate("INSERT INTO main VALUES(1, 'initial')");
+
+        sql.executeUpdate("UPDATE main SET this = GET_DDL('relation', 'target') WHERE __key < 2");
+
+        try (var result = sql.execute("SELECT * FROM main WHERE __key = 1")) {
+            String ddl = result.stream().findFirst().orElseThrow().getObject("this");
+            assertThat(ddl).startsWith("CREATE OR REPLACE EXTERNAL MAPPING \"hazelcast\".\"public\".\"target\" EXTERNAL NAME \"target\"");
+        }
     }
 }

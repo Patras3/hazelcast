@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.hazelcast.cp.internal.datastructures.countdownlatch.CountDownLatchSer
 import com.hazelcast.cp.internal.datastructures.cpmap.CPMapServiceUtil;
 import com.hazelcast.cp.internal.datastructures.semaphore.SemaphoreService;
 import com.hazelcast.internal.locksupport.LockSupportService;
+import com.hazelcast.internal.namespace.UserCodeNamespaceService;
 import com.hazelcast.executor.impl.DistributedExecutorService;
 import com.hazelcast.flakeidgen.impl.FlakeIdGeneratorService;
 import com.hazelcast.map.impl.MapService;
@@ -178,5 +179,13 @@ public class ActionConstantsTest {
 
         assertNotNull(permission);
         assertTrue(permission instanceof CPMapPermission);
+    }
+
+    @Test
+    public void getPermission_NamespaceService() {
+        Permission permission = ActionConstants.getPermission("foo", UserCodeNamespaceService.SERVICE_NAME);
+
+        assertNotNull(permission);
+        assertTrue(permission instanceof UserCodeNamespacePermission);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class AddMapConfigMessageTaskTest extends ConfigMessageTaskTest {
                 mapConfig.isPerEntryStatsEnabled(),
                 mapConfig.getDataPersistenceConfig(),
                 mapConfig.getTieredStoreConfig(),
-                null
+                null,
+                mapConfig.getUserCodeNamespace()
         );
         AddMapConfigMessageTask addMapConfigMessageTask = new AddMapConfigMessageTask(addMapConfigClientMessage, mockNode, mockConnection);
         addMapConfigMessageTask.run();
@@ -116,7 +117,8 @@ public class AddMapConfigMessageTaskTest extends ConfigMessageTaskTest {
                 mapConfig.isPerEntryStatsEnabled(),
                 mapConfig.getDataPersistenceConfig(),
                 mapConfig.getTieredStoreConfig(),
-                null
+                null,
+                mapConfig.getUserCodeNamespace()
         );
         AddMapConfigMessageTask addMapConfigMessageTask = new AddMapConfigMessageTask(addMapConfigClientMessage, mockNode, mockConnection);
         addMapConfigMessageTask.run();
@@ -163,7 +165,8 @@ public class AddMapConfigMessageTaskTest extends ConfigMessageTaskTest {
                 mapConfig.isPerEntryStatsEnabled(),
                 mapConfig.getDataPersistenceConfig(),
                 mapConfig.getTieredStoreConfig(),
-                mapConfig.getPartitioningAttributeConfigs()
+                mapConfig.getPartitioningAttributeConfigs(),
+                mapConfig.getUserCodeNamespace()
         );
         AddMapConfigMessageTask addMapConfigMessageTask = new AddMapConfigMessageTask(addMapConfigClientMessage, mockNode, mockConnection);
         addMapConfigMessageTask.run();

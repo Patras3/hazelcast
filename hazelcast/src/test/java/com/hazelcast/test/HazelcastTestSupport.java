@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2023, Hazelcast, Inc. All Rights Reserved.
+ * Copyright (c) 2008-2024, Hazelcast, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,15 +64,20 @@ import org.junit.Rule;
 import org.junit.experimental.categories.Category;
 import org.junit.function.ThrowingRunnable;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.StackWalker.Option;
+import java.lang.StackWalker.StackFrame;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -81,9 +86,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -101,7 +108,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -184,6 +190,8 @@ public abstract class HazelcastTestSupport {
                 .setProperty(ClusterProperty.PARTITION_OPERATION_THREAD_COUNT.getName(), "2")
                 .setProperty(ClusterProperty.GENERIC_OPERATION_THREAD_COUNT.getName(), "2")
                 .setProperty(ClusterProperty.EVENT_THREAD_COUNT.getName(), "1");
+
+        config.setProperty("hazelcast.logging.type", "log4j2");
         config.getMetricsConfig().setEnabled(false);
         config.getJetConfig().setEnabled(false);
         return config;
@@ -956,11 +964,20 @@ public abstract class HazelcastTestSupport {
     }
 
     public static void assertCompletesEventually(final Future<?> future) {
-        assertTrueEventually(() -> assertTrue("Future has not completed", future.isDone()));
+        assertCompletesEventually(future, ASSERT_TRUE_EVENTUALLY_TIMEOUT);
     }
 
     public static void assertCompletesEventually(final Future<?> future, long timeoutSeconds) {
-        assertTrueEventually(() -> assertTrue("Future has not completed", future.isDone()), timeoutSeconds);
+        try {
+            future.get(timeoutSeconds, TimeUnit.SECONDS);
+        } catch (ExecutionException | RuntimeException e) {
+            LOGGER.finest(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (TimeoutException e) {
+            fail(String.format("Future has not completed - %s", e));
+        }
     }
 
     public static void assertSizeEventually(int expectedSize, Collection<?> collection) {
@@ -970,7 +987,7 @@ public abstract class HazelcastTestSupport {
     public static void assertSizeEventually(final int expectedSize, final Collection<?> collection,
                                             long timeoutSeconds) {
         assertTrueEventually(() -> assertEquals("the size of the collection is not correct: found-content:"
-                        + collection, expectedSize, collection.size()), timeoutSeconds);
+                + collection, expectedSize, collection.size()), timeoutSeconds);
     }
 
     public static void assertSizeEventually(int expectedSize, Supplier<Collection<?>> collectionSupplier) {
@@ -1422,8 +1439,8 @@ public abstract class HazelcastTestSupport {
     }
 
     public static void assertThatIsNotMultithreadedTest() {
-        assertFalse("Test cannot run with parallel runner",
-                Thread.currentThread() instanceof MultithreadedTestRunnerThread);
+        assertThat(Thread.currentThread()).as("Test cannot run with parallel runner")
+                .isNotInstanceOf(MultithreadedTestRunnerThread.class);
     }
 
     // ###################################
@@ -1448,15 +1465,13 @@ public abstract class HazelcastTestSupport {
      * This method doesn't cover {@link Category} annotations on a test method.
      * It may also fail on test class hierarchies (the annotated class has to be in the stack trace).
      */
-    public static HashSet<Class<?>> getTestCategories() {
-        List<Class<?>> testCategories = acceptOnStackTrace((element, results) -> {
+    public static Collection<Class<?>> getTestCategories() {
+        Collection<Class<?>> testCategories = acceptOnStackTrace((frame, results) -> {
             try {
-                String className = element.getClassName();
-                Class<?> clazz = Class.forName(className);
+                Class<?> clazz = frame.getDeclaringClass();
                 Category annotation = clazz.getAnnotation(Category.class);
                 if (annotation != null) {
-                    List<Class<?>> categoryList = asList(annotation.value());
-                    results.addAll(categoryList);
+                    Collections.addAll(results, annotation.value());
                 }
             } catch (Exception ignored) {
             }
@@ -1464,7 +1479,7 @@ public abstract class HazelcastTestSupport {
         if (testCategories.isEmpty()) {
             fail("Could not find any classes with a @Category annotation in the stack trace");
         }
-        return new HashSet<>(testCategories);
+        return testCategories;
     }
 
     // ###################################
@@ -1598,12 +1613,10 @@ public abstract class HazelcastTestSupport {
      * result from the {@code BiConsumer} should be added to the {@code results} list which is
      * returned as the result of this method.
      */
-    private static <V> List<V> acceptOnStackTrace(BiConsumer<StackTraceElement, List<V>> consumer) {
-        List<V> results = new ArrayList<>();
-        StackTraceElement[] stackTrace = new Exception().getStackTrace();
-        for (StackTraceElement stackTraceElement : stackTrace) {
-            consumer.accept(stackTraceElement, results);
-        }
+    private static <V> Collection<V> acceptOnStackTrace(BiConsumer<StackFrame, Collection<V>> consumer) {
+        Collection<V> results = new ArrayList<>();
+        StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE)
+                .forEach(stackFrame -> consumer.accept(stackFrame, results));
         return results;
     }
 
@@ -1611,6 +1624,20 @@ public abstract class HazelcastTestSupport {
         Collection<DistributedObject> distributedObjects = hz.getDistributedObjects();
         for (DistributedObject object : distributedObjects) {
             object.destroy();
+        }
+    }
+
+    /**
+     * Returns raw byte[] of supplied file.
+     *
+     * @param testFile the file to get bytes from.
+     * @return the raw byte contents.
+     */
+    protected static byte[] getTestFileBytes(File testFile) {
+        try (InputStream is = testFile.toURI().toURL().openStream()) {
+            return is.readAllBytes();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }
